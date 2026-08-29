@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SC-013 회원가입 — savePick 와이어프레임</title>
+<style>
+:root{--color-brand:#17795E;--color-brand-weak:#E7F4EF;--color-fresh:#2FA37A;--color-discount:#0B5FA5;--color-warning:#9A5B00;--color-warning-weak:#FDF3E3;--color-danger:#C0392B;--color-danger-weak:#FBECEA;--color-text:#1A1F1C;--color-text-weak:#6B7671;--color-surface:#FFFFFF;--color-bg:#F4F7F5;--color-border:#DFE6E2;--color-on-brand:#FFFFFF;--font-family:Pretendard,-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Noto Sans KR","Malgun Gothic",sans-serif;--radius-sm:6px;--radius-md:10px;--radius-lg:14px;--shadow-card:0 1px 2px rgba(26,31,28,.06);--shadow-sheet:0 -4px 16px rgba(26,31,28,.12)}
+*{box-sizing:border-box;margin:0;padding:0}
+[hidden]{display:none!important}
+body{font:400 15px/1.6 var(--font-family);color:var(--color-text);background:var(--color-border);padding:12px 0 40px}
+a{color:inherit;text-decoration:none}
+.meta{width:360px;margin:0 auto 12px;background:var(--color-text);color:var(--color-on-brand);border-radius:var(--radius-md);padding:10px 12px;font:400 13px/1.5 var(--font-family)}
+.meta b{font:600 17px/1.4 var(--font-family);display:block}
+.meta .fr{color:var(--color-border);word-break:keep-all}
+.meta a{color:var(--color-on-brand);text-decoration:underline}
+.states{width:360px;margin:0 auto 8px;display:flex;flex-wrap:wrap;gap:4px}
+.stbtn{min-height:32px;padding:4px 10px;border:1px solid var(--color-border);background:var(--color-surface);color:var(--color-text);border-radius:var(--radius-sm);font:400 13px/1.5 var(--font-family);cursor:pointer}
+.stbtn.on{background:var(--color-brand);border-color:var(--color-brand);color:var(--color-on-brand)}
+.frame{width:360px;height:640px;margin:0 auto;background:var(--color-bg);display:flex;flex-direction:column;overflow:hidden;position:relative;border:1px solid var(--color-border);border-radius:var(--radius-lg)}
+.appbar{flex:0 0 56px;display:flex;align-items:center;gap:8px;padding:0 16px;background:var(--color-surface);border-bottom:1px solid var(--color-border)}
+.appbar .ttl{font:600 17px/1.4 var(--font-family)}
+.appbar .back{width:44px;height:44px;margin-left:-12px;display:flex;align-items:center;justify-content:center;font-size:18px}
+.scroll{flex:1 1 auto;overflow-y:auto;overflow-x:hidden;padding:16px}
+.band{flex:0 0 auto;padding:10px 16px;font:400 13px/1.5 var(--font-family)}
+.band-danger{background:var(--color-danger-weak);color:var(--color-danger)}
+.cap{font:400 13px/1.5 var(--font-family);color:var(--color-text-weak)}
+.mt1{margin-top:4px}.mt2{margin-top:8px}.mb2{margin-bottom:8px}
+.field{margin-bottom:16px}
+.field label{display:block;font:400 13px/1.5 var(--font-family);color:var(--color-text-weak);margin-bottom:4px}
+.field input{width:100%;height:52px;border:1px solid var(--color-border);border-radius:var(--radius-md);padding:0 12px;font:400 15px/1.6 var(--font-family);background:var(--color-surface);color:var(--color-text)}
+.field.err input{border-color:var(--color-danger)}
+.field .msg{font:400 13px/1.5 var(--font-family);color:var(--color-danger);margin-top:4px}
+.btn{display:flex;align-items:center;justify-content:center;width:100%;min-height:48px;border-radius:var(--radius-md);border:1px solid var(--color-border);background:var(--color-surface);color:var(--color-text);font:400 15px/1.6 var(--font-family);cursor:pointer;text-align:center}
+.btn-primary{min-height:52px;background:var(--color-brand);border-color:var(--color-brand);color:var(--color-on-brand);font-weight:600}
+.btn:disabled{background:var(--color-border);border-color:var(--color-border);color:var(--color-text-weak);cursor:not-allowed}
+.actionbar{flex:0 0 auto;padding:10px 16px;background:var(--color-surface);box-shadow:var(--shadow-sheet)}
+.dim{position:absolute;inset:0;background:rgba(26,31,28,.4);display:flex;align-items:flex-end}
+.sheet{width:100%;background:var(--color-surface);border-radius:var(--radius-lg) var(--radius-lg) 0 0;box-shadow:var(--shadow-sheet);padding:16px}
+.sheet h3{font:600 17px/1.4 var(--font-family);margin-bottom:8px}
+.sheet .btn{margin-top:8px}
+</style>
+</head>
+<body>
+
+<div class="meta">
+  <b>SC-013 · 회원가입</b>
+  사용자: 비로그인 전용 (가입만으로 관리자 권한이 생기지 않는다)
+  <div class="fr">FR-001</div>
+  <div class="fr"><a href="index.html">화면 인덱스로</a></div>
+</div>
+
+<div class="states">
+  <button class="stbtn" data-s="default" onclick="setState('default')">기본</button>
+  <button class="stbtn" data-s="loading" onclick="setState('loading')">로딩</button>
+  <button class="stbtn" data-s="required" onclick="setState('required')">오류(필수 누락)</button>
+  <button class="stbtn" data-s="dup" onclick="setState('dup')">오류(이메일 중복)</button>
+  <button class="stbtn" data-s="format" onclick="setState('format')">오류(형식)</button>
+  <button class="stbtn" data-s="error" onclick="setState('error')">오류(통신)</button>
+</div>
+
+<div class="frame" id="frame">
+  <div class="appbar">
+    <a class="back" href="sc-012-login.html">←</a>
+    <span class="ttl">회원가입</span>
+  </div>
+
+  <div class="band band-danger st st-dup">이미 가입된 이메일이에요</div>
+
+  <div class="scroll">
+    <p class="cap mb2">이름과 휴대폰 번호는 매장 픽업 응대에만 써요.</p>
+
+    <div class="field st st-default st-loading st-required st-error">
+      <label for="e1">이메일</label>
+      <input id="e1" type="email" value="jihyun@example.com">
+    </div>
+    <div class="field err st st-dup">
+      <label for="e2">이메일</label>
+      <input id="e2" type="email" value="jihyun@example.com">
+      <p class="msg">이미 가입된 이메일이에요</p>
+    </div>
+    <div class="field err st st-format">
+      <label for="e3">이메일</label>
+      <input id="e3" type="text" value="jihyun.example.com">
+      <p class="msg">이메일 형식으로 입력해주세요</p>
+    </div>
+
+    <div class="field st st-default st-loading st-dup st-error">
+      <label for="p1">비밀번호 (8자 이상)</label>
+      <input id="p1" type="password" value="********">
+    </div>
+    <div class="field err st st-format st-required">
+      <label for="p2">비밀번호 (8자 이상)</label>
+      <input id="p2" type="password" value="****">
+      <p class="msg">비밀번호는 8자 이상이어야 해요</p>
+    </div>
+
+    <div class="field st st-default st-loading st-dup st-format st-error">
+      <label for="n1">이름</label>
+      <input id="n1" type="text" value="김지현">
+    </div>
+    <div class="field err st st-required">
+      <label for="n2">이름</label>
+      <input id="n2" type="text" value="">
+      <p class="msg">이름을 입력해주세요</p>
+    </div>
+
+    <div class="field st st-default st-loading st-dup st-format st-error">
+      <label for="t1">휴대폰 번호</label>
+      <input id="t1" type="tel" value="010-0000-0000">
+    </div>
+    <div class="field err st st-required">
+      <label for="t2">휴대폰 번호</label>
+      <input id="t2" type="tel" value="">
+      <p class="msg">휴대폰 번호를 입력해주세요</p>
+    </div>
+
+    <a class="btn st st-dup" href="sc-012-login.html">로그인하기</a>
+  </div>
+
+  <div class="actionbar">
+    <button class="btn btn-primary st st-default st-error">가입하고 계속하기</button>
+    <button class="btn st st-loading" disabled>가입하는 중이에요</button>
+    <div class="st st-required st-format st-dup">
+      <p class="cap mb2">입력값을 확인해주세요</p>
+      <button class="btn" disabled>가입하고 계속하기</button>
+    </div>
+  </div>
+
+  <div class="dim st st-error">
+    <div class="sheet">
+      <h3>가입하지 못했어요</h3>
+      <p class="cap">잠시 뒤에 다시 시도해주세요.</p>
+      <button class="btn btn-primary" onclick="setState('default')">다시 시도</button>
+    </div>
+  </div>
+</div>
+
+<script>
+function setState(s){
+  var f=document.getElementById('frame'); f.setAttribute('data-state',s);
+  var els=document.querySelectorAll('.st');
+  for(var i=0;i<els.length;i++){ els[i].hidden = !els[i].classList.contains('st-'+s); }
+  var bs=document.querySelectorAll('.stbtn');
+  for(var j=0;j<bs.length;j++){ bs[j].className = 'stbtn' + (bs[j].getAttribute('data-s')===s?' on':''); }
+}
+setState('default');
+</script>
+</body>
+</html>

@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SC-003 상품 상세 — savePick 와이어프레임</title>
+<style>
+:root{--color-brand:#17795E;--color-brand-weak:#E7F4EF;--color-fresh:#2FA37A;--color-discount:#0B5FA5;--color-warning:#9A5B00;--color-warning-weak:#FDF3E3;--color-danger:#C0392B;--color-danger-weak:#FBECEA;--color-text:#1A1F1C;--color-text-weak:#6B7671;--color-surface:#FFFFFF;--color-bg:#F4F7F5;--color-border:#DFE6E2;--color-on-brand:#FFFFFF;--font-family:Pretendard,-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Noto Sans KR","Malgun Gothic",sans-serif;--space-1:4px;--space-2:8px;--space-3:12px;--space-4:16px;--space-6:24px;--space-8:32px;--radius-sm:6px;--radius-md:10px;--radius-lg:14px;--shadow-card:0 1px 2px rgba(26,31,28,.06);--shadow-sheet:0 -4px 16px rgba(26,31,28,.12)}
+*{box-sizing:border-box;margin:0;padding:0}
+[hidden]{display:none!important}
+body{font:400 15px/1.6 var(--font-family);color:var(--color-text);background:var(--color-border);padding:12px 0 40px}
+a{color:inherit;text-decoration:none}
+.meta{width:360px;margin:0 auto 12px;background:var(--color-text);color:var(--color-on-brand);border-radius:var(--radius-md);padding:10px 12px;font:400 13px/1.5 var(--font-family)}
+.meta b{font:600 17px/1.4 var(--font-family);display:block}
+.meta .fr{color:var(--color-border);word-break:keep-all}
+.meta a{color:var(--color-on-brand);text-decoration:underline}
+.states{width:360px;margin:0 auto 8px;display:flex;flex-wrap:wrap;gap:4px}
+.stbtn{min-height:32px;padding:4px 10px;border:1px solid var(--color-border);background:var(--color-surface);color:var(--color-text);border-radius:var(--radius-sm);font:400 13px/1.5 var(--font-family);cursor:pointer}
+.stbtn.on{background:var(--color-brand);border-color:var(--color-brand);color:var(--color-on-brand)}
+.frame{width:360px;height:640px;margin:0 auto;background:var(--color-bg);display:flex;flex-direction:column;overflow:hidden;position:relative;border:1px solid var(--color-border);border-radius:var(--radius-lg)}
+.appbar{flex:0 0 56px;display:flex;align-items:center;gap:8px;padding:0 16px;background:var(--color-surface);border-bottom:1px solid var(--color-border)}
+.appbar .ttl{font:600 17px/1.4 var(--font-family)}
+.appbar .back{width:44px;height:44px;margin-left:-12px;display:flex;align-items:center;justify-content:center;font-size:18px}
+.appbar .right{margin-left:auto;font:400 13px/1.5 var(--font-family);color:var(--color-brand)}
+.scroll{flex:1 1 auto;overflow-y:auto;overflow-x:hidden;padding:16px}
+.band{flex:0 0 auto;padding:10px 16px;font:400 13px/1.5 var(--font-family)}
+.band-warn{background:var(--color-warning-weak);color:var(--color-warning)}
+.band-brand{background:var(--color-brand-weak);color:var(--color-brand)}
+.band-danger{background:var(--color-danger-weak);color:var(--color-danger)}
+.band-mute{background:var(--color-border);color:var(--color-text-weak)}
+.timer{flex:0 0 44px;display:flex;align-items:center;justify-content:center;background:var(--color-brand-weak);color:var(--color-brand);font:600 15px/1.4 var(--font-family)}
+.timer.warn{background:var(--color-warning-weak);color:var(--color-warning)}
+.card{display:block;background:var(--color-surface);border:1px solid var(--color-border);border-radius:var(--radius-lg);box-shadow:var(--shadow-card);padding:16px;margin-bottom:12px}
+.sec{font:600 17px/1.4 var(--font-family);margin:24px 0 8px}
+.sec.first{margin-top:0}
+.cap{font:400 13px/1.5 var(--font-family);color:var(--color-text-weak)}
+.warn{color:var(--color-warning)}.danger{color:var(--color-danger)}.brand{color:var(--color-brand)}
+.price{font:700 20px/1.3 var(--font-family);font-variant-numeric:tabular-nums;letter-spacing:-.01em;color:var(--color-discount)}
+.strike{text-decoration:line-through;color:var(--color-text-weak);font:400 13px/1.5 var(--font-family)}
+.badge{display:inline-block;height:22px;padding:0 8px;border-radius:var(--radius-sm);font:400 13px/22px var(--font-family)}
+.b-disc{background:var(--color-brand-weak);color:var(--color-brand)}
+.b-sold{background:var(--color-danger-weak);color:var(--color-danger)}
+.b-end{background:var(--color-border);color:var(--color-text-weak)}
+.b-mute{background:var(--color-border);color:var(--color-text-weak)}
+.b-ok{background:var(--color-brand-weak);color:var(--color-brand)}
+.b-warn{background:var(--color-warning-weak);color:var(--color-warning)}
+.row{display:flex;align-items:center;gap:8px}
+.top{align-items:flex-start}
+.between{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.grow{flex:1;min-width:0}
+.num{font-variant-numeric:tabular-nums}
+.mt1{margin-top:4px}.mt2{margin-top:8px}.mt4{margin-top:16px}.mb2{margin-bottom:8px}.o55{opacity:.55}
+.pname{font:600 17px/1.4 var(--font-family);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.thumb{width:96px;height:96px;flex:0 0 96px;background:var(--color-border);border-radius:var(--radius-md);display:flex;align-items:center;justify-content:center;color:var(--color-text-weak);font:400 13px/1.3 var(--font-family);text-align:center;padding:4px}
+.hero{width:100%;height:160px;background:var(--color-border);border-radius:var(--radius-lg);display:flex;align-items:center;justify-content:center;color:var(--color-text-weak);font:400 13px/1.5 var(--font-family);margin-bottom:12px}
+.btn{display:flex;align-items:center;justify-content:center;width:100%;min-height:48px;border-radius:var(--radius-md);border:1px solid var(--color-border);background:var(--color-surface);color:var(--color-text);font:400 15px/1.6 var(--font-family);cursor:pointer;text-align:center}
+.btn-primary{min-height:52px;background:var(--color-brand);border-color:var(--color-brand);color:var(--color-on-brand);font-weight:600}
+.btn-danger{border-color:var(--color-danger);color:var(--color-danger)}
+.btn-text{min-height:44px;border:0;background:none;color:var(--color-brand)}
+.btn:disabled,.btn[aria-disabled=true]{background:var(--color-border);border-color:var(--color-border);color:var(--color-text-weak);cursor:not-allowed}
+.actionbar{flex:0 0 auto;padding:10px 16px;background:var(--color-surface);box-shadow:var(--shadow-sheet)}
+.actionbar .amt{font:700 20px/1.3 var(--font-family);font-variant-numeric:tabular-nums;white-space:nowrap}
+.tabbar{flex:0 0 56px;display:flex;background:var(--color-surface);border-top:1px solid var(--color-border)}
+.tabbar a{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;font:400 13px/1.2 var(--font-family);color:var(--color-text-weak)}
+.tabbar a.on{color:var(--color-brand);font-weight:600}
+.skel{background:var(--color-border);border-radius:var(--radius-sm);height:14px;margin:6px 0}
+.empty{text-align:center;padding:32px 16px}
+.empty h3{font:600 17px/1.4 var(--font-family);margin-bottom:8px}
+.dim{position:absolute;inset:0;background:rgba(26,31,28,.4);display:flex;align-items:flex-end}
+.sheet{width:100%;background:var(--color-surface);border-radius:var(--radius-lg) var(--radius-lg) 0 0;box-shadow:var(--shadow-sheet);padding:16px}
+.sheet h3{font:600 17px/1.4 var(--font-family);margin-bottom:8px}
+.sheet .btn{margin-top:8px}
+.qty{display:flex;align-items:center;border:1px solid var(--color-border);border-radius:var(--radius-md);overflow:hidden}
+.qty button{width:44px;height:44px;border:0;background:var(--color-surface);font-size:18px;color:var(--color-text);cursor:pointer}
+.qty button:disabled{color:var(--color-text-weak);background:var(--color-bg)}
+.qty span{width:44px;text-align:center;font-variant-numeric:tabular-nums}
+.dl{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--color-border);font:400 15px/1.6 var(--font-family)}
+.dl:last-child{border-bottom:0}
+.dl dt{color:var(--color-text-weak);font:400 13px/1.5 var(--font-family)}
+</style>
+</head>
+<body>
+
+<div class="meta">
+  <b>SC-003 · 상품 상세</b>
+  사용자: 비로그인, 고객
+  <div class="fr">FR-013, FR-014, FR-015, FR-016, FR-034</div>
+  <div class="fr"><a href="index.html">화면 인덱스로</a></div>
+</div>
+
+<div class="states">
+  <button class="stbtn" data-s="default" onclick="setState('default')">기본</button>
+  <button class="stbtn" data-s="loading" onclick="setState('loading')">로딩</button>
+  <button class="stbtn" data-s="max" onclick="setState('max')">수량 초과</button>
+  <button class="stbtn" data-s="added" onclick="setState('added')">담기 완료</button>
+  <button class="stbtn" data-s="soldout" onclick="setState('soldout')">재고 소진</button>
+  <button class="stbtn" data-s="closed" onclick="setState('closed')">마감 도달</button>
+  <button class="stbtn" data-s="notfound" onclick="setState('notfound')">오류(없는 상품)</button>
+  <button class="stbtn" data-s="error" onclick="setState('error')">오류(통신)</button>
+</div>
+
+<div class="frame" id="frame">
+  <div class="appbar">
+    <a class="back" href="sc-001-home-product-list.html">←</a>
+    <span class="ttl">상품 상세</span>
+  </div>
+
+  <div class="band band-mute st st-closed">판매가 종료된 상품이에요 (21:00 마감)</div>
+
+  <div class="scroll st st-default st-max st-added st-soldout st-closed st-error">
+    <div class="hero">삼겹살 500g 사진 자리</div>
+
+    <div class="card">
+      <div class="between">
+        <span class="pname">삼겹살 500g</span>
+        <span class="badge b-sold st st-soldout">품절</span>
+        <span class="badge b-end st st-closed">판매 종료</span>
+      </div>
+      <p class="cap">국내산 · 냉장 · 500g 팩 단위</p>
+
+      <div class="mt2">
+        <div class="strike num">12,000원</div>
+        <div class="price">8,400원</div>
+        <div class="mt1"><span class="badge b-disc">30% 할인</span> <span class="cap">3,600원 아낌</span></div>
+      </div>
+
+      <div class="mt2">
+        <div class="dl"><dt>남은 수량</dt><dd class="warn st st-default st-max st-added st-error">2개 · 소진 임박</dd><dd class="danger st st-soldout st-closed">품절</dd></div>
+        <div class="dl"><dt>마감 시각</dt><dd>오늘 21:00</dd></div>
+        <div class="dl"><dt>판매 단위</dt><dd>1팩 (500g)</dd></div>
+        <div class="dl"><dt>1회 주문 최대 수량</dt><dd>5개</dd></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <p class="cap">할인율은 마감 시각까지 남은 시간으로 자동 계산돼요. 24시간 초과 0% · 24시간~6시간 30% · 6시간~2시간 50% · 2시간 이하 70%.</p>
+    </div>
+  </div>
+
+  <!-- 로딩 -->
+  <div class="scroll st st-loading">
+    <div class="hero"></div>
+    <div class="card">
+      <div class="skel" style="width:60%;height:20px"></div>
+      <div class="skel" style="width:40%"></div>
+      <div class="skel" style="width:35%;height:22px"></div>
+      <div class="skel" style="width:70%"></div>
+      <div class="skel" style="width:50%"></div>
+    </div>
+    <p class="cap" style="text-align:center">상품 정보를 불러오는 중이에요</p>
+  </div>
+
+  <!-- 오류(없는 상품): 전체 화면 -->
+  <div class="scroll st st-notfound">
+    <div class="empty">
+      <h3>상품을 찾을 수 없어요</h3>
+      <p class="cap mb2">마감되었거나 판매가 중지된 상품일 수 있어요</p>
+      <a class="btn" href="sc-001-home-product-list.html">상품 목록으로</a>
+    </div>
+  </div>
+
+  <!-- 하단 고정 액션 바 -->
+  <div class="actionbar st st-default st-max st-added st-error">
+    <p class="cap warn mb2 st st-max">1회 최대 5개까지 담을 수 있어요</p>
+    <div class="row">
+      <div class="qty">
+        <button aria-label="수량 줄이기">−</button>
+        <span class="st st-default st-added st-error">2</span>
+        <span class="st st-max">5</span>
+        <button aria-label="수량 늘리기" class="st st-default st-added st-error">+</button>
+        <button aria-label="수량 늘리기" class="st st-max" disabled>+</button>
+      </div>
+      <button class="btn btn-primary grow" onclick="setState('added')">장바구니 담기</button>
+    </div>
+  </div>
+
+  <div class="actionbar st st-soldout st-closed">
+    <p class="cap mb2 st st-soldout">품절됐어요. 다른 상품을 둘러보세요</p>
+    <p class="cap mb2 st st-closed">판매가 종료된 상품이에요</p>
+    <div class="row">
+      <div class="qty">
+        <button disabled>−</button><span>1</span><button disabled>+</button>
+      </div>
+      <button class="btn grow" disabled>지금은 담을 수 없어요</button>
+    </div>
+  </div>
+
+  <!-- 담기 완료 시트 -->
+  <div class="dim st st-added">
+    <div class="sheet">
+      <h3>장바구니에 담았어요</h3>
+      <p class="cap">삼겹살 500g 2개 · 16,800원</p>
+      <a class="btn btn-primary" href="sc-004-cart.html">장바구니 보기</a>
+      <button class="btn" onclick="setState('default')">계속 둘러보기</button>
+    </div>
+  </div>
+
+  <!-- 오류(통신) 시트 -->
+  <div class="dim st st-error">
+    <div class="sheet">
+      <h3>정보를 불러오지 못했어요</h3>
+      <p class="cap">잠시 뒤에 다시 시도해주세요.</p>
+      <button class="btn btn-primary" onclick="setState('default')">다시 시도</button>
+    </div>
+  </div>
+</div>
+
+<script>
+function setState(s){
+  var f=document.getElementById('frame'); f.setAttribute('data-state',s);
+  var els=document.querySelectorAll('.st');
+  for(var i=0;i<els.length;i++){ els[i].hidden = !els[i].classList.contains('st-'+s); }
+  var bs=document.querySelectorAll('.stbtn');
+  for(var j=0;j<bs.length;j++){ bs[j].className = 'stbtn' + (bs[j].getAttribute('data-s')===s?' on':''); }
+}
+setState('default');
+</script>
+</body>
+</html>

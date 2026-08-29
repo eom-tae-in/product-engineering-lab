@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SC-103 상품 관리 목록 — savePick 와이어프레임</title>
+<style>
+:root{--color-brand:#17795E;--color-brand-weak:#E7F4EF;--color-fresh:#2FA37A;--color-discount:#0B5FA5;--color-warning:#9A5B00;--color-warning-weak:#FDF3E3;--color-danger:#C0392B;--color-danger-weak:#FBECEA;--color-text:#1A1F1C;--color-text-weak:#6B7671;--color-surface:#FFFFFF;--color-bg:#F4F7F5;--color-border:#DFE6E2;--color-on-brand:#FFFFFF;--font-family:Pretendard,-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Noto Sans KR","Malgun Gothic",sans-serif;--radius-sm:6px;--radius-md:10px;--radius-lg:14px;--shadow-card:0 1px 2px rgba(26,31,28,.06);--shadow-sheet:0 -4px 16px rgba(26,31,28,.12)}
+*{box-sizing:border-box;margin:0;padding:0}
+[hidden]{display:none!important}
+body{font:400 15px/1.6 var(--font-family);color:var(--color-text);background:var(--color-border);padding:12px 0 40px}
+a{color:inherit;text-decoration:none}
+.meta{width:360px;margin:0 auto 12px;background:var(--color-text);color:var(--color-on-brand);border-radius:var(--radius-md);padding:10px 12px;font:400 13px/1.5 var(--font-family)}
+.meta b{font:600 17px/1.4 var(--font-family);display:block}
+.meta .fr{color:var(--color-border);word-break:keep-all}
+.meta a{color:var(--color-on-brand);text-decoration:underline}
+.states{width:360px;margin:0 auto 8px;display:flex;flex-wrap:wrap;gap:4px}
+.stbtn{min-height:32px;padding:4px 10px;border:1px solid var(--color-border);background:var(--color-surface);color:var(--color-text);border-radius:var(--radius-sm);font:400 13px/1.5 var(--font-family);cursor:pointer}
+.stbtn.on{background:var(--color-brand);border-color:var(--color-brand);color:var(--color-on-brand)}
+.frame{width:360px;height:640px;margin:0 auto;background:var(--color-bg);display:flex;flex-direction:column;overflow:hidden;position:relative;border:1px solid var(--color-border);border-radius:var(--radius-lg)}
+.appbar{flex:0 0 56px;display:flex;align-items:center;gap:8px;padding:0 16px;background:var(--color-surface);border-bottom:1px solid var(--color-border)}
+.appbar .ttl{font:600 17px/1.4 var(--font-family)}
+.appbar .back{width:44px;height:44px;margin-left:-12px;display:flex;align-items:center;justify-content:center;font-size:18px}
+.appbar .right{margin-left:auto;font:400 13px/1.5 var(--font-family);color:var(--color-brand)}
+.scroll{flex:1 1 auto;overflow-y:auto;overflow-x:hidden;padding:16px}
+.card{display:block;background:var(--color-surface);border:1px solid var(--color-border);border-radius:var(--radius-lg);box-shadow:var(--shadow-card);padding:16px;margin-bottom:12px}
+.cap{font:400 13px/1.5 var(--font-family);color:var(--color-text-weak)}
+.warn{color:var(--color-warning)}.danger{color:var(--color-danger)}.brand{color:var(--color-brand)}
+.badge{display:inline-block;height:22px;padding:0 8px;border-radius:var(--radius-sm);font:400 13px/22px var(--font-family)}
+.b-ok{background:var(--color-brand-weak);color:var(--color-brand)}
+.b-mute{background:var(--color-border);color:var(--color-text-weak)}
+.b-bad{background:var(--color-danger-weak);color:var(--color-danger)}
+.b-warn{background:var(--color-warning-weak);color:var(--color-warning)}
+.between{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.row{display:flex;align-items:center;gap:8px}
+.num{font-variant-numeric:tabular-nums}
+.mt1{margin-top:4px}.mt2{margin-top:8px}.mb2{margin-bottom:8px}
+.pname{font:600 17px/1.4 var(--font-family)}
+.price{font:700 20px/1.3 var(--font-family);font-variant-numeric:tabular-nums;color:var(--color-discount)}
+.strike{text-decoration:line-through;color:var(--color-text-weak);font:400 13px/1.5 var(--font-family)}
+.filters{display:flex;gap:4px;overflow-x:auto;padding-bottom:4px;margin-bottom:12px}
+.filters button{flex:0 0 auto;min-height:36px;padding:0 12px;border:1px solid var(--color-border);background:var(--color-surface);border-radius:var(--radius-sm);font:400 13px/1.5 var(--font-family);color:var(--color-text);cursor:pointer}
+.filters button.on{background:var(--color-brand);border-color:var(--color-brand);color:var(--color-on-brand)}
+.btn{display:flex;align-items:center;justify-content:center;width:100%;min-height:48px;border-radius:var(--radius-md);border:1px solid var(--color-border);background:var(--color-surface);color:var(--color-text);font:400 15px/1.6 var(--font-family);cursor:pointer;text-align:center}
+.btn-primary{min-height:52px;background:var(--color-brand);border-color:var(--color-brand);color:var(--color-on-brand);font-weight:600}
+.btn-sm{min-height:44px;width:auto;padding:0 12px;font:400 13px/1.5 var(--font-family)}
+.actionbar{flex:0 0 auto;padding:10px 16px;background:var(--color-surface);box-shadow:var(--shadow-sheet)}
+.skel{background:var(--color-border);border-radius:var(--radius-sm);height:14px;margin:6px 0}
+.empty{text-align:center;padding:32px 16px}
+.empty h3{font:600 17px/1.4 var(--font-family);margin-bottom:8px}
+.dim{position:absolute;inset:0;background:rgba(26,31,28,.4);display:flex;align-items:flex-end}
+.sheet{width:100%;background:var(--color-surface);border-radius:var(--radius-lg) var(--radius-lg) 0 0;box-shadow:var(--shadow-sheet);padding:16px}
+.sheet h3{font:600 17px/1.4 var(--font-family);margin-bottom:8px}
+.sheet .btn{margin-top:8px}
+</style>
+</head>
+<body>
+
+<div class="meta">
+  <b>SC-103 · 상품 관리 목록</b>
+  사용자: 관리자
+  <div class="fr">FR-042, FR-044, FR-046</div>
+  <div class="fr"><a href="index.html">화면 인덱스로</a></div>
+</div>
+
+<div class="states">
+  <button class="stbtn" data-s="default" onclick="setState('default')">기본</button>
+  <button class="stbtn" data-s="loading" onclick="setState('loading')">로딩</button>
+  <button class="stbtn" data-s="empty" onclick="setState('empty')">빈 상태</button>
+  <button class="stbtn" data-s="soldout" onclick="setState('soldout')">재고 소진</button>
+  <button class="stbtn" data-s="nostock" onclick="setState('nostock')">오류(ON_SALE 불가)</button>
+  <button class="stbtn" data-s="closed" onclick="setState('closed')">오류(CLOSED 되돌리기)</button>
+  <button class="stbtn" data-s="error" onclick="setState('error')">오류(통신)</button>
+</div>
+
+<div class="frame" id="frame">
+  <div class="appbar">
+    <a class="back" href="sc-102-admin-home.html">←</a>
+    <span class="ttl">상품 관리</span>
+    <a class="right" href="sc-107-discount-policy.html">할인 정책</a>
+  </div>
+
+  <div class="scroll">
+    <div class="filters">
+      <button class="on">전체</button>
+      <button>판매 중</button>
+      <button>숨김</button>
+      <button>임시</button>
+      <button>마감</button>
+    </div>
+
+    <div class="st st-default st-soldout st-nostock st-closed st-error">
+      <a class="card" href="sc-104-product-edit.html">
+        <div class="between"><span class="pname">삼겹살 500g</span><span class="badge b-ok">판매 중</span></div>
+        <div class="row mt1"><span class="strike num">12,000원</span><span class="price">8,400원</span><span class="badge b-ok">30%</span></div>
+        <div class="between mt1"><span class="cap">판매 가능 2개</span><span class="cap">오늘 21:00 마감</span></div>
+      </a>
+
+      <div class="card">
+        <div class="between"><a class="pname" href="sc-104-product-edit.html">방울토마토 500g</a><span class="badge b-ok">판매 중</span></div>
+        <div class="row mt1"><span class="strike num">6,000원</span><span class="price">3,000원</span><span class="badge b-ok">50%</span></div>
+        <div class="between mt1"><span class="cap warn st st-soldout">판매 가능 0 · 판매할 수 없어요</span><span class="cap st st-default st-nostock st-closed st-error">판매 가능 5개</span><span class="cap">오늘 19:00 마감</span></div>
+        <div class="row mt2">
+          <button class="btn btn-sm">숨기기</button>
+          <a class="btn btn-sm" href="sc-105-stock-manage.html">재고 보기</a>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="between"><a class="pname" href="sc-104-product-edit.html">한우 등심 300g</a><span class="badge b-mute">임시</span></div>
+        <div class="row mt1"><span class="price">39,000원</span><span class="cap">할인 적용 전</span></div>
+        <div class="between mt1"><span class="cap warn">판매 가능 0 · 재고 미등록</span><span class="cap">내일 20:00 마감</span></div>
+        <div class="row mt2">
+          <button class="btn btn-sm" onclick="setState('nostock')">판매 시작</button>
+          <a class="btn btn-sm" href="sc-105-stock-manage.html">재고 등록</a>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="between"><a class="pname" href="sc-104-product-edit.html">훈제 오리 400g</a><span class="badge b-mute">마감</span></div>
+        <div class="row mt1"><span class="strike num">15,000원</span><span class="price">7,500원</span></div>
+        <div class="between mt1"><span class="cap">판매 가능 0</span><span class="cap">20:00 마감됨</span></div>
+        <div class="row mt2"><button class="btn btn-sm" onclick="setState('closed')">판매 시작</button></div>
+      </div>
+
+      <div class="card">
+        <div class="between"><a class="pname" href="sc-104-product-edit.html">모둠쌈 채소</a><span class="badge b-mute">숨김</span></div>
+        <div class="row mt1"><span class="price">4,500원</span><span class="cap">할인 적용 전</span></div>
+        <div class="between mt1"><span class="cap">판매 가능 12개</span><span class="cap">내일 22:00 마감</span></div>
+        <div class="row mt2"><button class="btn btn-sm">판매 시작</button></div>
+      </div>
+    </div>
+
+    <div class="st st-loading">
+      <div class="card"><div class="skel" style="width:50%"></div><div class="skel" style="width:70%"></div></div>
+      <div class="card"><div class="skel" style="width:60%"></div><div class="skel" style="width:65%"></div></div>
+      <div class="card"><div class="skel" style="width:45%"></div><div class="skel" style="width:75%"></div></div>
+      <div class="card"><div class="skel" style="width:55%"></div><div class="skel" style="width:60%"></div></div>
+      <div class="card"><div class="skel" style="width:50%"></div><div class="skel" style="width:70%"></div></div>
+      <p class="cap" style="text-align:center">상품 목록을 불러오는 중이에요</p>
+    </div>
+
+    <div class="st st-empty">
+      <div class="empty">
+        <h3>등록된 상품이 없어요</h3>
+        <a class="btn" href="sc-104-product-edit.html">상품 등록하기</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="actionbar st st-default st-loading st-soldout st-nostock st-closed st-error">
+    <a class="btn btn-primary" href="sc-104-product-edit.html">상품 등록</a>
+  </div>
+
+  <div class="dim st st-nostock">
+    <div class="sheet">
+      <h3>재고를 먼저 등록해야 판매할 수 있어요</h3>
+      <p class="cap">한우 등심 300g의 총 재고가 0이에요. 재고를 등록하면 판매 중으로 바꿀 수 있어요.</p>
+      <a class="btn btn-primary" href="sc-105-stock-manage.html">재고 등록하러 가기</a>
+      <button class="btn" onclick="setState('default')">닫기</button>
+    </div>
+  </div>
+
+  <div class="dim st st-closed">
+    <div class="sheet">
+      <h3>마감된 상품은 다시 판매할 수 없어요</h3>
+      <p class="cap">새 상품으로 등록해주세요.</p>
+      <a class="btn btn-primary" href="sc-104-product-edit.html">새 상품 등록하기</a>
+      <button class="btn" onclick="setState('default')">닫기</button>
+    </div>
+  </div>
+
+  <div class="dim st st-error">
+    <div class="sheet">
+      <h3>불러오지 못했어요</h3>
+      <p class="cap">지금 보이는 목록은 마지막으로 불러온 결과예요.</p>
+      <button class="btn btn-primary" onclick="setState('default')">다시 시도</button>
+    </div>
+  </div>
+</div>
+
+<script>
+function setState(s){
+  var f=document.getElementById('frame'); f.setAttribute('data-state',s);
+  var els=document.querySelectorAll('.st');
+  for(var i=0;i<els.length;i++){ els[i].hidden = !els[i].classList.contains('st-'+s); }
+  var bs=document.querySelectorAll('.stbtn');
+  for(var j=0;j<bs.length;j++){ bs[j].className = 'stbtn' + (bs[j].getAttribute('data-s')===s?' on':''); }
+}
+setState('default');
+</script>
+</body>
+</html>

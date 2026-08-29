@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SC-113 픽업 운영 설정 — savePick 와이어프레임</title>
+<style>
+:root{--color-brand:#17795E;--color-brand-weak:#E7F4EF;--color-fresh:#2FA37A;--color-discount:#0B5FA5;--color-warning:#9A5B00;--color-warning-weak:#FDF3E3;--color-danger:#C0392B;--color-danger-weak:#FBECEA;--color-text:#1A1F1C;--color-text-weak:#6B7671;--color-surface:#FFFFFF;--color-bg:#F4F7F5;--color-border:#DFE6E2;--color-on-brand:#FFFFFF;--font-family:Pretendard,-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Noto Sans KR","Malgun Gothic",sans-serif;--radius-sm:6px;--radius-md:10px;--radius-lg:14px;--shadow-card:0 1px 2px rgba(26,31,28,.06);--shadow-sheet:0 -4px 16px rgba(26,31,28,.12)}
+*{box-sizing:border-box;margin:0;padding:0}
+[hidden]{display:none!important}
+body{font:400 15px/1.6 var(--font-family);color:var(--color-text);background:var(--color-border);padding:12px 0 40px}
+a{color:inherit;text-decoration:none}
+.meta{width:360px;margin:0 auto 12px;background:var(--color-text);color:var(--color-on-brand);border-radius:var(--radius-md);padding:10px 12px;font:400 13px/1.5 var(--font-family)}
+.meta b{font:600 17px/1.4 var(--font-family);display:block}
+.meta .fr{color:var(--color-border);word-break:keep-all}
+.meta a{color:var(--color-on-brand);text-decoration:underline}
+.states{width:360px;margin:0 auto 8px;display:flex;flex-wrap:wrap;gap:4px}
+.stbtn{min-height:32px;padding:4px 10px;border:1px solid var(--color-border);background:var(--color-surface);color:var(--color-text);border-radius:var(--radius-sm);font:400 13px/1.5 var(--font-family);cursor:pointer}
+.stbtn.on{background:var(--color-brand);border-color:var(--color-brand);color:var(--color-on-brand)}
+.frame{width:360px;height:640px;margin:0 auto;background:var(--color-bg);display:flex;flex-direction:column;overflow:hidden;position:relative;border:1px solid var(--color-border);border-radius:var(--radius-lg)}
+.appbar{flex:0 0 56px;display:flex;align-items:center;gap:8px;padding:0 16px;background:var(--color-surface);border-bottom:1px solid var(--color-border)}
+.appbar .ttl{font:600 17px/1.4 var(--font-family)}
+.appbar .back{width:44px;height:44px;margin-left:-12px;display:flex;align-items:center;justify-content:center;font-size:18px}
+.scroll{flex:1 1 auto;overflow-y:auto;overflow-x:hidden;padding:16px}
+.card{display:block;background:var(--color-surface);border:1px solid var(--color-border);border-radius:var(--radius-lg);box-shadow:var(--shadow-card);padding:16px;margin-bottom:12px}
+.cap{font:400 13px/1.5 var(--font-family);color:var(--color-text-weak)}
+.warn{color:var(--color-warning)}.danger{color:var(--color-danger)}
+.sec{font:600 17px/1.4 var(--font-family);margin-bottom:8px}
+.between{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.row{display:flex;align-items:center;gap:8px}
+.num{font-variant-numeric:tabular-nums}
+.mt1{margin-top:4px}.mt2{margin-top:8px}.mb2{margin-bottom:8px}
+.field{margin-bottom:16px}
+.field label{display:block;font:400 13px/1.5 var(--font-family);color:var(--color-text-weak);margin-bottom:4px}
+.field input,.field select{width:100%;height:52px;border:1px solid var(--color-border);border-radius:var(--radius-md);padding:0 12px;font:400 15px/1.6 var(--font-family);background:var(--color-surface);color:var(--color-text);font-variant-numeric:tabular-nums}
+.field.err input,.field.err select{border-color:var(--color-danger)}
+.field .msg{font:400 13px/1.5 var(--font-family);color:var(--color-danger);margin-top:4px}
+.half{display:flex;gap:8px}
+.half .field{flex:1}
+.btn{display:flex;align-items:center;justify-content:center;width:100%;min-height:48px;border-radius:var(--radius-md);border:1px solid var(--color-border);background:var(--color-surface);color:var(--color-text);font:400 15px/1.6 var(--font-family);cursor:pointer;text-align:center}
+.btn-primary{min-height:52px;background:var(--color-brand);border-color:var(--color-brand);color:var(--color-on-brand);font-weight:600}
+.btn-sm{min-height:44px;width:auto;padding:0 12px;font:400 13px/1.5 var(--font-family)}
+.btn:disabled{background:var(--color-border);border-color:var(--color-border);color:var(--color-text-weak);cursor:not-allowed}
+.actionbar{flex:0 0 auto;padding:10px 16px;background:var(--color-surface);box-shadow:var(--shadow-sheet)}
+.list .it{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:10px 0;border-bottom:1px solid var(--color-border);min-height:56px}
+.list .it:last-child{border-bottom:0}
+.skel{background:var(--color-border);border-radius:var(--radius-sm);height:14px;margin:6px 0}
+.empty{text-align:center;padding:16px}
+.dim{position:absolute;inset:0;background:rgba(26,31,28,.4);display:flex;align-items:flex-end}
+.sheet{width:100%;background:var(--color-surface);border-radius:var(--radius-lg) var(--radius-lg) 0 0;box-shadow:var(--shadow-sheet);padding:16px}
+.sheet h3{font:600 17px/1.4 var(--font-family);margin-bottom:8px}
+.sheet .btn{margin-top:8px}
+</style>
+</head>
+<body>
+
+<div class="meta">
+  <b>SC-113 · 픽업 운영 설정</b>
+  사용자: 관리자
+  <div class="fr">FR-056, FR-057, FR-058</div>
+  <div class="fr"><a href="index.html">화면 인덱스로</a></div>
+</div>
+
+<div class="states">
+  <button class="stbtn" data-s="default" onclick="setState('default')">기본</button>
+  <button class="stbtn" data-s="loading" onclick="setState('loading')">로딩</button>
+  <button class="stbtn" data-s="empty" onclick="setState('empty')">빈 상태(차단 없음)</button>
+  <button class="stbtn" data-s="reverse" onclick="setState('reverse')">오류(시간 역전)</button>
+  <button class="stbtn" data-s="cap" onclick="setState('cap')">오류(정원 값)</button>
+  <button class="stbtn" data-s="warn" onclick="setState('warn')">경고(기존 예약 초과)</button>
+  <button class="stbtn" data-s="short" onclick="setState('short')">경고(영업 단축)</button>
+  <button class="stbtn" data-s="error" onclick="setState('error')">오류(통신)</button>
+</div>
+
+<div class="frame" id="frame">
+  <div class="appbar">
+    <a class="back" href="sc-102-admin-home.html">←</a>
+    <span class="ttl">픽업 운영 설정</span>
+  </div>
+
+  <div class="scroll st st-default st-empty st-reverse st-cap st-warn st-short st-error">
+    <div class="card">
+      <div class="sec">영업시간</div>
+      <div class="half st st-default st-empty st-cap st-warn st-error">
+        <div class="field"><label for="s1">시작</label><select id="s1"><option>10:00</option></select></div>
+        <div class="field"><label for="e1">종료</label><select id="e1"><option>22:00</option></select></div>
+      </div>
+      <div class="half st st-reverse">
+        <div class="field"><label for="s2">시작</label><select id="s2"><option>20:00</option></select></div>
+        <div class="field err"><label for="e2">종료</label><select id="e2"><option>18:00</option></select><p class="msg">영업 종료 시각은 시작 시각보다 늦어야 해요</p></div>
+      </div>
+      <div class="half st st-short">
+        <div class="field"><label for="s3">시작</label><select id="s3"><option>10:00</option></select></div>
+        <div class="field"><label for="e3">종료</label><select id="e3"><option>21:00</option></select></div>
+      </div>
+      <p class="cap">30분 단위로 지정해요. 현재 24개 시간대가 만들어져요.</p>
+    </div>
+
+    <div class="card">
+      <div class="sec">시간대 정원</div>
+      <div class="field st st-default st-empty st-reverse st-short st-error">
+        <label for="c1">시간대당 예약 정원 (건)</label>
+        <input id="c1" type="text" value="20">
+      </div>
+      <div class="field err st st-cap">
+        <label for="c2">시간대당 예약 정원 (건)</label>
+        <input id="c2" type="text" value="0">
+        <p class="msg">정원은 1 이상 정수여야 해요</p>
+      </div>
+      <div class="field st st-warn">
+        <label for="c3">시간대당 예약 정원 (건)</label>
+        <input id="c3" type="text" value="12">
+        <p class="cap warn mt1">이미 15건이 예약된 시간대가 있어요</p>
+      </div>
+      <p class="cap">예약은 시간대 시작 30분 전까지 받을 수 있어요.</p>
+    </div>
+
+    <div class="card">
+      <div class="sec">차단한 시간대</div>
+      <div class="list st st-default st-reverse st-cap st-warn st-short st-error">
+        <div class="it"><span>오늘 8/28 · 20:30~21:00</span><button class="btn btn-sm">해제</button></div>
+        <div class="it"><span>내일 8/29 · 10:00~10:30</span><button class="btn btn-sm">해제</button></div>
+      </div>
+      <div class="empty st st-empty"><p class="cap">차단한 시간대가 없어요</p></div>
+      <a class="btn mt2" href="sc-111-pickup-slot-status.html" style="margin-top:8px">픽업 현황에서 차단하기</a>
+    </div>
+
+    <div class="card">
+      <div class="sec">휴무일</div>
+      <div class="list">
+        <div class="it"><span>2026-09-01 (화)</span><button class="btn btn-sm">삭제</button></div>
+      </div>
+      <button class="btn mt2" style="margin-top:8px">휴무일 추가</button>
+    </div>
+
+    <div class="card">
+      <p class="cap">설정을 바꿔도 이미 확정된 주문의 픽업 시간대는 바뀌지 않아요.</p>
+    </div>
+  </div>
+
+  <div class="scroll st st-loading">
+    <div class="card"><div class="skel" style="width:40%"></div><div class="skel" style="width:100%;height:40px"></div></div>
+    <div class="card"><div class="skel" style="width:35%"></div><div class="skel" style="width:100%;height:40px"></div></div>
+    <div class="card"><div class="skel" style="width:45%"></div><div class="skel" style="width:80%"></div></div>
+    <p class="cap" style="text-align:center">설정 값을 불러오는 중이에요</p>
+  </div>
+
+  <div class="actionbar">
+    <button class="btn btn-primary st st-default st-empty" onclick="setState('default')">저장</button>
+    <button class="btn st st-loading" disabled>저장하는 중이에요</button>
+    <div class="st st-reverse st-cap">
+      <p class="cap mb2">입력값을 확인해주세요</p>
+      <button class="btn" disabled>저장</button>
+    </div>
+    <button class="btn btn-primary st st-warn st-short st-error" onclick="setState('default')">저장</button>
+  </div>
+
+  <div class="dim st st-warn">
+    <div class="sheet">
+      <h3>이미 15건이 예약된 시간대가 있어요</h3>
+      <p class="cap">정원을 12건으로 줄여도 기존 주문은 취소되지 않아요. 새 예약만 12건까지 받게 돼요.</p>
+      <button class="btn btn-primary" onclick="setState('default')">그대로 저장하기</button>
+      <button class="btn" onclick="setState('default')">닫기</button>
+    </div>
+  </div>
+
+  <div class="dim st st-short">
+    <div class="sheet">
+      <h3>21:00 이후 시작하는 시간대가 신규 선택에서 빠져요</h3>
+      <p class="cap">확정된 주문은 유지돼요.</p>
+      <button class="btn btn-primary" onclick="setState('default')">그대로 저장하기</button>
+      <button class="btn" onclick="setState('default')">닫기</button>
+    </div>
+  </div>
+
+  <div class="dim st st-error">
+    <div class="sheet">
+      <h3>불러오지 못했어요</h3>
+      <p class="cap">지금 보이는 값은 마지막으로 불러온 설정이에요.</p>
+      <button class="btn btn-primary" onclick="setState('default')">다시 시도</button>
+    </div>
+  </div>
+</div>
+
+<script>
+function setState(s){
+  var f=document.getElementById('frame'); f.setAttribute('data-state',s);
+  var els=document.querySelectorAll('.st');
+  for(var i=0;i<els.length;i++){ els[i].hidden = !els[i].classList.contains('st-'+s); }
+  var bs=document.querySelectorAll('.stbtn');
+  for(var j=0;j<bs.length;j++){ bs[j].className = 'stbtn' + (bs[j].getAttribute('data-s')===s?' on':''); }
+}
+setState('default');
+</script>
+</body>
+</html>

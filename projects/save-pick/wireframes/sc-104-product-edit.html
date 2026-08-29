@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SC-104 상품 등록·수정 — savePick 와이어프레임</title>
+<style>
+:root{--color-brand:#17795E;--color-brand-weak:#E7F4EF;--color-fresh:#2FA37A;--color-discount:#0B5FA5;--color-warning:#9A5B00;--color-warning-weak:#FDF3E3;--color-danger:#C0392B;--color-danger-weak:#FBECEA;--color-text:#1A1F1C;--color-text-weak:#6B7671;--color-surface:#FFFFFF;--color-bg:#F4F7F5;--color-border:#DFE6E2;--color-on-brand:#FFFFFF;--font-family:Pretendard,-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Noto Sans KR","Malgun Gothic",sans-serif;--radius-sm:6px;--radius-md:10px;--radius-lg:14px;--shadow-card:0 1px 2px rgba(26,31,28,.06);--shadow-sheet:0 -4px 16px rgba(26,31,28,.12)}
+*{box-sizing:border-box;margin:0;padding:0}
+[hidden]{display:none!important}
+body{font:400 15px/1.6 var(--font-family);color:var(--color-text);background:var(--color-border);padding:12px 0 40px}
+a{color:inherit;text-decoration:none}
+.meta{width:360px;margin:0 auto 12px;background:var(--color-text);color:var(--color-on-brand);border-radius:var(--radius-md);padding:10px 12px;font:400 13px/1.5 var(--font-family)}
+.meta b{font:600 17px/1.4 var(--font-family);display:block}
+.meta .fr{color:var(--color-border);word-break:keep-all}
+.meta a{color:var(--color-on-brand);text-decoration:underline}
+.states{width:360px;margin:0 auto 8px;display:flex;flex-wrap:wrap;gap:4px}
+.stbtn{min-height:32px;padding:4px 10px;border:1px solid var(--color-border);background:var(--color-surface);color:var(--color-text);border-radius:var(--radius-sm);font:400 13px/1.5 var(--font-family);cursor:pointer}
+.stbtn.on{background:var(--color-brand);border-color:var(--color-brand);color:var(--color-on-brand)}
+.frame{width:360px;height:640px;margin:0 auto;background:var(--color-bg);display:flex;flex-direction:column;overflow:hidden;position:relative;border:1px solid var(--color-border);border-radius:var(--radius-lg)}
+.appbar{flex:0 0 56px;display:flex;align-items:center;gap:8px;padding:0 16px;background:var(--color-surface);border-bottom:1px solid var(--color-border)}
+.appbar .ttl{font:600 17px/1.4 var(--font-family)}
+.appbar .back{width:44px;height:44px;margin-left:-12px;display:flex;align-items:center;justify-content:center;font-size:18px}
+.scroll{flex:1 1 auto;overflow-y:auto;overflow-x:hidden;padding:16px}
+.band{flex:0 0 auto;padding:10px 16px;font:400 13px/1.5 var(--font-family)}
+.band-brand{background:var(--color-brand-weak);color:var(--color-brand)}
+.band-mute{background:var(--color-border);color:var(--color-text-weak)}
+.card{display:block;background:var(--color-surface);border:1px solid var(--color-border);border-radius:var(--radius-lg);box-shadow:var(--shadow-card);padding:16px;margin-bottom:12px}
+.cap{font:400 13px/1.5 var(--font-family);color:var(--color-text-weak)}
+.warn{color:var(--color-warning)}.danger{color:var(--color-danger)}.brand{color:var(--color-brand)}
+.sec{font:600 17px/1.4 var(--font-family);margin-bottom:8px}
+.mt1{margin-top:4px}.mt2{margin-top:8px}.mb2{margin-bottom:8px}
+.field{margin-bottom:16px}
+.field label{display:block;font:400 13px/1.5 var(--font-family);color:var(--color-text-weak);margin-bottom:4px}
+.field input,.field select,.field textarea{width:100%;height:52px;border:1px solid var(--color-border);border-radius:var(--radius-md);padding:0 12px;font:400 15px/1.6 var(--font-family);background:var(--color-surface);color:var(--color-text)}
+.field textarea{height:80px;padding:10px 12px}
+.field input:disabled{background:var(--color-bg);color:var(--color-text-weak)}
+.field.err input{border-color:var(--color-danger)}
+.field .msg{font:400 13px/1.5 var(--font-family);color:var(--color-danger);margin-top:4px}
+.btn{display:flex;align-items:center;justify-content:center;width:100%;min-height:48px;border-radius:var(--radius-md);border:1px solid var(--color-border);background:var(--color-surface);color:var(--color-text);font:400 15px/1.6 var(--font-family);cursor:pointer;text-align:center}
+.btn-primary{min-height:52px;background:var(--color-brand);border-color:var(--color-brand);color:var(--color-on-brand);font-weight:600}
+.btn:disabled{background:var(--color-border);border-color:var(--color-border);color:var(--color-text-weak);cursor:not-allowed}
+.actionbar{flex:0 0 auto;padding:10px 16px;background:var(--color-surface);box-shadow:var(--shadow-sheet)}
+.skel{background:var(--color-border);border-radius:var(--radius-sm);height:14px;margin:6px 0}
+.dim{position:absolute;inset:0;background:rgba(26,31,28,.4);display:flex;align-items:flex-end}
+.sheet{width:100%;background:var(--color-surface);border-radius:var(--radius-lg) var(--radius-lg) 0 0;box-shadow:var(--shadow-sheet);padding:16px}
+.sheet h3{font:600 17px/1.4 var(--font-family);margin-bottom:8px}
+.sheet .btn{margin-top:8px}
+</style>
+</head>
+<body>
+
+<div class="meta">
+  <b>SC-104 · 상품 등록·수정</b>
+  사용자: 관리자
+  <div class="fr">FR-040, FR-041, FR-042, FR-043</div>
+  <div class="fr"><a href="index.html">화면 인덱스로</a></div>
+</div>
+
+<div class="states">
+  <button class="stbtn" data-s="default" onclick="setState('default')">기본(등록)</button>
+  <button class="stbtn" data-s="edit" onclick="setState('edit')">기본(수정)</button>
+  <button class="stbtn" data-s="loading" onclick="setState('loading')">로딩</button>
+  <button class="stbtn" data-s="required" onclick="setState('required')">오류(필수 누락)</button>
+  <button class="stbtn" data-s="past" onclick="setState('past')">오류(마감 과거)</button>
+  <button class="stbtn" data-s="over" onclick="setState('over')">오류(마감 상한)</button>
+  <button class="stbtn" data-s="price" onclick="setState('price')">오류(정가 하한)</button>
+  <button class="stbtn" data-s="qty" onclick="setState('qty')">오류(최대 수량)</button>
+  <button class="stbtn" data-s="confirm" onclick="setState('confirm')">경고(확정 주문 영향)</button>
+  <button class="stbtn" data-s="closed" onclick="setState('closed')">오류(CLOSED 수정)</button>
+</div>
+
+<div class="frame" id="frame">
+  <div class="appbar">
+    <a class="back" href="sc-103-product-manage.html">←</a>
+    <span class="ttl st st-default st-loading st-required st-price st-qty">상품 등록</span>
+    <span class="ttl st st-edit st-past st-over st-confirm st-closed">상품 수정</span>
+  </div>
+
+  <div class="band band-mute st st-default st-required st-price st-qty">등록하면 DRAFT 상태가 되고 고객에게 보이지 않아요</div>
+  <div class="band band-mute st st-edit st-past st-over st-confirm">마지막 수정 2026-08-28 16:40</div>
+  <div class="band band-mute st st-closed">마감된 상품이에요. 마감 시각은 바꿀 수 없어요</div>
+
+  <div class="scroll st st-default st-edit st-required st-past st-over st-price st-qty st-confirm st-closed">
+    <div class="field st st-default st-past st-over st-price st-qty st-confirm st-closed st-edit">
+      <label for="nm">상품명</label>
+      <input id="nm" type="text" value="삼겹살 500g">
+    </div>
+    <div class="field err st st-required">
+      <label for="nm2">상품명</label>
+      <input id="nm2" type="text" value="">
+      <p class="msg">상품명을 입력해주세요</p>
+    </div>
+
+    <div class="field">
+      <label for="desc">설명</label>
+      <textarea id="desc">국내산 냉장 삼겹살입니다.</textarea>
+    </div>
+
+    <div class="field">
+      <label for="unit">판매 단위</label>
+      <input id="unit" type="text" value="1팩 (500g)">
+    </div>
+
+    <div class="field st st-default st-edit st-required st-past st-over st-qty st-confirm st-closed">
+      <label for="pr">정가 (원)</label>
+      <input id="pr" type="text" value="12,000">
+    </div>
+    <div class="field err st st-price">
+      <label for="pr2">정가 (원)</label>
+      <input id="pr2" type="text" value="50">
+      <p class="msg">정가는 100원 이상이어야 해요</p>
+    </div>
+
+    <div class="field st st-default st-edit st-required st-price st-qty st-confirm">
+      <label for="dl">마감 시각</label>
+      <input id="dl" type="text" value="2026-08-28 21:00">
+    </div>
+    <div class="field err st st-past">
+      <label for="dl2">마감 시각</label>
+      <input id="dl2" type="text" value="2026-08-28 15:00">
+      <p class="msg">마감 시각은 현재 시각 이후로 정해주세요</p>
+    </div>
+    <div class="field err st st-over">
+      <label for="dl3">마감 시각</label>
+      <input id="dl3" type="text" value="2026-08-28 23:00">
+      <p class="msg">마감 시각은 영업 종료 시각 22:00을 넘을 수 없어요</p>
+    </div>
+    <div class="field st st-closed">
+      <label for="dl4">마감 시각</label>
+      <input id="dl4" type="text" value="2026-08-28 20:00" disabled>
+      <p class="cap mt1">마감된 상품의 마감 시각은 바꿀 수 없어요</p>
+    </div>
+
+    <div class="card st st-default st-edit st-required st-price st-qty st-confirm st-closed">
+      <p class="cap">할인 미리 보기</p>
+      <p class="brand">현재 적용 할인율 30% · 다음 구간(50%) 진입 15:00</p>
+      <p class="cap mt1">할인율은 마감 시각으로 자동 계산돼요. 24시간 초과 0% · 24~6시간 30% · 6~2시간 50% · 2시간 이하 70%</p>
+      <a class="btn mt2" href="sc-107-discount-policy.html" style="margin-top:8px">할인 구간 정책 보기</a>
+    </div>
+
+    <div class="field st st-default st-edit st-required st-past st-over st-price st-confirm st-closed">
+      <label for="mx">1회 주문 최대 수량</label>
+      <input id="mx" type="text" value="5">
+    </div>
+    <div class="field err st st-qty">
+      <label for="mx2">1회 주문 최대 수량</label>
+      <input id="mx2" type="text" value="0">
+      <p class="msg">1회 주문 최대 수량은 1 이상이어야 해요</p>
+    </div>
+
+    <div class="field">
+      <label for="stt">판매 상태</label>
+      <select id="stt"><option>임시(DRAFT)</option><option>판매 중(ON_SALE)</option><option>숨김(HIDDEN)</option></select>
+    </div>
+
+    <a class="btn mb2" href="sc-105-stock-manage.html">재고 등록으로 이어가기</a>
+  </div>
+
+  <div class="scroll st st-loading">
+    <div class="card"><div class="skel" style="width:40%"></div><div class="skel" style="width:100%;height:40px"></div></div>
+    <div class="card"><div class="skel" style="width:30%"></div><div class="skel" style="width:100%;height:40px"></div></div>
+    <div class="card"><div class="skel" style="width:35%"></div><div class="skel" style="width:100%;height:40px"></div></div>
+    <p class="cap" style="text-align:center">상품 정보를 불러오는 중이에요</p>
+  </div>
+
+  <div class="actionbar">
+    <a class="btn btn-primary st st-default st-edit" href="sc-103-product-manage.html">저장</a>
+    <button class="btn st st-loading" disabled>저장하는 중이에요</button>
+    <div class="st st-required st-past st-over st-price st-qty st-closed">
+      <p class="cap mb2">입력값을 확인해주세요</p>
+      <button class="btn" disabled>저장</button>
+    </div>
+    <button class="btn btn-primary st st-confirm" onclick="setState('confirm')">저장</button>
+  </div>
+
+  <div class="dim st st-confirm">
+    <div class="sheet">
+      <h3>확정된 주문 3건의 픽업 시간대보다 빨라져요</h3>
+      <p class="cap">마감 시각을 앞당기면 이미 확정된 주문의 픽업 시간대가 마감 이후가 돼요. 확정 주문은 취소되지 않아요.</p>
+      <button class="btn" onclick="setState('edit')">그대로 두기</button>
+      <a class="btn btn-primary" href="sc-103-product-manage.html">그래도 저장하기</a>
+    </div>
+  </div>
+</div>
+
+<script>
+function setState(s){
+  var f=document.getElementById('frame'); f.setAttribute('data-state',s);
+  var els=document.querySelectorAll('.st');
+  for(var i=0;i<els.length;i++){ els[i].hidden = !els[i].classList.contains('st-'+s); }
+  var bs=document.querySelectorAll('.stbtn');
+  for(var j=0;j<bs.length;j++){ bs[j].className = 'stbtn' + (bs[j].getAttribute('data-s')===s?' on':''); }
+}
+setState('default');
+</script>
+</body>
+</html>

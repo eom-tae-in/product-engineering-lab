@@ -1,0 +1,26 @@
+# OS
+.DS_Store
+
+# IDE
+.idea/
+*.iml
+.vscode/
+
+# projects/save-pick/backend (Gradle / Java)
+projects/save-pick/backend/.gradle/
+projects/save-pick/backend/build/
+projects/save-pick/backend/out/
+projects/save-pick/backend/!gradle/wrapper/gradle-wrapper.jar
+projects/save-pick/backend/*.log
+
+# projects/save-pick/frontend (Node / Next.js)
+projects/save-pick/frontend/node_modules/
+projects/save-pick/frontend/.next/
+projects/save-pick/frontend/out/
+projects/save-pick/frontend/dist/
+projects/save-pick/frontend/*.tsbuildinfo
+projects/save-pick/frontend/.env*.local
+
+# env files (secrets)
+.env
+.env.local

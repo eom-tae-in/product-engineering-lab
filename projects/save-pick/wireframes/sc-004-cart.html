@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SC-004 장바구니 — savePick 와이어프레임</title>
+<style>
+:root{--color-brand:#17795E;--color-brand-weak:#E7F4EF;--color-fresh:#2FA37A;--color-discount:#0B5FA5;--color-warning:#9A5B00;--color-warning-weak:#FDF3E3;--color-danger:#C0392B;--color-danger-weak:#FBECEA;--color-text:#1A1F1C;--color-text-weak:#6B7671;--color-surface:#FFFFFF;--color-bg:#F4F7F5;--color-border:#DFE6E2;--color-on-brand:#FFFFFF;--font-family:Pretendard,-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Noto Sans KR","Malgun Gothic",sans-serif;--space-1:4px;--space-2:8px;--space-3:12px;--space-4:16px;--space-6:24px;--space-8:32px;--radius-sm:6px;--radius-md:10px;--radius-lg:14px;--shadow-card:0 1px 2px rgba(26,31,28,.06);--shadow-sheet:0 -4px 16px rgba(26,31,28,.12)}
+*{box-sizing:border-box;margin:0;padding:0}
+[hidden]{display:none!important}
+body{font:400 15px/1.6 var(--font-family);color:var(--color-text);background:var(--color-border);padding:12px 0 40px}
+a{color:inherit;text-decoration:none}
+.meta{width:360px;margin:0 auto 12px;background:var(--color-text);color:var(--color-on-brand);border-radius:var(--radius-md);padding:10px 12px;font:400 13px/1.5 var(--font-family)}
+.meta b{font:600 17px/1.4 var(--font-family);display:block}
+.meta .fr{color:var(--color-border);word-break:keep-all}
+.meta a{color:var(--color-on-brand);text-decoration:underline}
+.states{width:360px;margin:0 auto 8px;display:flex;flex-wrap:wrap;gap:4px}
+.stbtn{min-height:32px;padding:4px 10px;border:1px solid var(--color-border);background:var(--color-surface);color:var(--color-text);border-radius:var(--radius-sm);font:400 13px/1.5 var(--font-family);cursor:pointer}
+.stbtn.on{background:var(--color-brand);border-color:var(--color-brand);color:var(--color-on-brand)}
+.frame{width:360px;height:640px;margin:0 auto;background:var(--color-bg);display:flex;flex-direction:column;overflow:hidden;position:relative;border:1px solid var(--color-border);border-radius:var(--radius-lg)}
+.appbar{flex:0 0 56px;display:flex;align-items:center;gap:8px;padding:0 16px;background:var(--color-surface);border-bottom:1px solid var(--color-border)}
+.appbar .ttl{font:600 17px/1.4 var(--font-family)}
+.appbar .back{width:44px;height:44px;margin-left:-12px;display:flex;align-items:center;justify-content:center;font-size:18px}
+.appbar .right{margin-left:auto;font:400 13px/1.5 var(--font-family);color:var(--color-brand)}
+.scroll{flex:1 1 auto;overflow-y:auto;overflow-x:hidden;padding:16px}
+.band{flex:0 0 auto;padding:10px 16px;font:400 13px/1.5 var(--font-family)}
+.band-warn{background:var(--color-warning-weak);color:var(--color-warning)}
+.band-brand{background:var(--color-brand-weak);color:var(--color-brand)}
+.band-danger{background:var(--color-danger-weak);color:var(--color-danger)}
+.band-mute{background:var(--color-border);color:var(--color-text-weak)}
+.card{display:block;background:var(--color-surface);border:1px solid var(--color-border);border-radius:var(--radius-lg);box-shadow:var(--shadow-card);padding:16px;margin-bottom:12px}
+.card.bad{background:var(--color-warning-weak);border-color:var(--color-warning-weak)}
+.sec{font:600 17px/1.4 var(--font-family);margin:24px 0 8px}
+.sec.first{margin-top:0}
+.cap{font:400 13px/1.5 var(--font-family);color:var(--color-text-weak)}
+.warn{color:var(--color-warning)}.danger{color:var(--color-danger)}.brand{color:var(--color-brand)}
+.price{font:700 20px/1.3 var(--font-family);font-variant-numeric:tabular-nums;letter-spacing:-.01em;color:var(--color-discount)}
+.strike{text-decoration:line-through;color:var(--color-text-weak);font:400 13px/1.5 var(--font-family)}
+.badge{display:inline-block;height:22px;padding:0 8px;border-radius:var(--radius-sm);font:400 13px/22px var(--font-family)}
+.b-disc{background:var(--color-brand-weak);color:var(--color-brand)}
+.b-sold{background:var(--color-danger-weak);color:var(--color-danger)}
+.b-end{background:var(--color-border);color:var(--color-text-weak)}
+.row{display:flex;align-items:center;gap:8px}
+.top{align-items:flex-start}
+.between{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.grow{flex:1;min-width:0}
+.num{font-variant-numeric:tabular-nums}
+.mt1{margin-top:4px}.mt2{margin-top:8px}.mt4{margin-top:16px}.mb2{margin-bottom:8px}.o55{opacity:.55}
+.pname{font:600 17px/1.4 var(--font-family);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.btn{display:flex;align-items:center;justify-content:center;width:100%;min-height:48px;border-radius:var(--radius-md);border:1px solid var(--color-border);background:var(--color-surface);color:var(--color-text);font:400 15px/1.6 var(--font-family);cursor:pointer;text-align:center}
+.btn-primary{min-height:52px;background:var(--color-brand);border-color:var(--color-brand);color:var(--color-on-brand);font-weight:600}
+.btn-danger{border-color:var(--color-danger);color:var(--color-danger)}
+.btn-text{min-height:44px;border:0;background:none;color:var(--color-brand)}
+.btn:disabled,.btn[aria-disabled=true]{background:var(--color-border);border-color:var(--color-border);color:var(--color-text-weak);cursor:not-allowed}
+.actionbar{flex:0 0 auto;padding:10px 16px;background:var(--color-surface);box-shadow:var(--shadow-sheet)}
+.actionbar .amt{font:700 20px/1.3 var(--font-family);font-variant-numeric:tabular-nums;white-space:nowrap}
+.skel{background:var(--color-border);border-radius:var(--radius-sm);height:14px;margin:6px 0}
+.empty{text-align:center;padding:32px 16px}
+.empty h3{font:600 17px/1.4 var(--font-family);margin-bottom:8px}
+.dim{position:absolute;inset:0;background:rgba(26,31,28,.4);display:flex;align-items:flex-end}
+.sheet{width:100%;background:var(--color-surface);border-radius:var(--radius-lg) var(--radius-lg) 0 0;box-shadow:var(--shadow-sheet);padding:16px}
+.sheet h3{font:600 17px/1.4 var(--font-family);margin-bottom:8px}
+.sheet .btn{margin-top:8px}
+.qty{display:flex;align-items:center;border:1px solid var(--color-border);border-radius:var(--radius-md);overflow:hidden}
+.qty button{width:44px;height:44px;border:0;background:var(--color-surface);font-size:18px;color:var(--color-text);cursor:pointer}
+.qty button:disabled{color:var(--color-text-weak);background:var(--color-bg)}
+.qty span{width:44px;text-align:center;font-variant-numeric:tabular-nums}
+.dl{display:flex;justify-content:space-between;padding:6px 0;font:400 15px/1.6 var(--font-family)}
+.dl dt{color:var(--color-text-weak);font:400 13px/1.5 var(--font-family)}
+.tabbar{flex:0 0 56px;display:flex;background:var(--color-surface);border-top:1px solid var(--color-border)}
+.tabbar a{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;font:400 13px/1.2 var(--font-family);color:var(--color-text-weak)}
+.tabbar a.on{color:var(--color-brand);font-weight:600}
+</style>
+</head>
+<body>
+
+<div class="meta">
+  <b>SC-004 · 장바구니</b>
+  사용자: 비로그인, 고객
+  <div class="fr">FR-014, FR-016, FR-017, FR-018, FR-019, FR-034</div>
+  <div class="fr"><a href="index.html">화면 인덱스로</a></div>
+</div>
+
+<div class="states">
+  <button class="stbtn" data-s="default" onclick="setState('default')">기본</button>
+  <button class="stbtn" data-s="loading" onclick="setState('loading')">로딩</button>
+  <button class="stbtn" data-s="empty" onclick="setState('empty')">빈 상태</button>
+  <button class="stbtn" data-s="soldout" onclick="setState('soldout')">재고 소진·부족</button>
+  <button class="stbtn" data-s="priced" onclick="setState('priced')">가격 변동</button>
+  <button class="stbtn" data-s="conflict" onclick="setState('conflict')">오류(선점 실패)</button>
+  <button class="stbtn" data-s="restricted" onclick="setState('restricted')">오류(주문 제한)</button>
+  <button class="stbtn" data-s="pending" onclick="setState('pending')">오류(진행 중 주문서)</button>
+  <button class="stbtn" data-s="error" onclick="setState('error')">오류(통신)</button>
+</div>
+
+<div class="frame" id="frame">
+  <div class="appbar">
+    <span class="ttl">장바구니</span>
+    <span class="right st st-default st-priced st-soldout">3건</span>
+  </div>
+
+  <div class="band band-warn st st-soldout">
+    구매할 수 없는 품목 1건이 있어요
+  </div>
+
+  <div class="scroll st st-default st-priced st-soldout st-conflict st-restricted st-pending st-error">
+    <div class="card">
+      <div class="between top">
+        <div class="grow">
+          <a class="pname" href="sc-003-product-detail.html">삼겹살 500g</a>
+          <div class="strike num">12,000원</div>
+          <div class="price">8,400원</div>
+          <p class="cap warn mt1 st st-priced">할인 구간이 바뀌어 가격이 8,400원 → 6,000원으로 변경됐어요</p>
+        </div>
+        <span class="num" style="font-weight:600">16,800원</span>
+      </div>
+      <div class="row mt2">
+        <div class="qty"><button>−</button><span>2</span><button>+</button></div>
+        <button class="btn-text" style="width:auto;padding:0 8px;min-height:44px;border:0;background:none;color:var(--color-text-weak);cursor:pointer">삭제</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="between top">
+        <div class="grow">
+          <a class="pname" href="sc-003-product-detail.html">대파 1단</a>
+          <div class="strike num">3,000원</div>
+          <div class="price">2,100원</div>
+        </div>
+        <span class="num" style="font-weight:600">2,100원</span>
+      </div>
+      <div class="row mt2">
+        <div class="qty"><button>−</button><span>1</span><button>+</button></div>
+        <button class="btn-text" style="width:auto;padding:0 8px;min-height:44px;border:0;background:none;color:var(--color-text-weak);cursor:pointer">삭제</button>
+      </div>
+    </div>
+
+    <!-- 구매 불가 품목 (재고 소진 상태) -->
+    <div class="card bad st st-soldout">
+      <div class="between top">
+        <div class="grow">
+          <div class="between"><span class="pname">훈제 오리 400g</span><span class="badge b-sold">품절</span></div>
+          <div class="price">7,500원</div>
+          <p class="cap danger mt1">품절됐어요</p>
+        </div>
+      </div>
+      <div class="row mt2">
+        <div class="qty"><button disabled>−</button><span>1</span><button disabled>+</button></div>
+      </div>
+    </div>
+
+    <div class="card bad st st-soldout">
+      <div class="between top">
+        <div class="grow">
+          <div class="between"><span class="pname">방울토마토 500g</span><span class="badge b-end">판매 종료</span></div>
+          <div class="price">3,000원</div>
+          <p class="cap warn mt1">남은 수량 1개 · 2개 부족</p>
+          <p class="cap">수량을 1개로 줄이면 주문할 수 있어요</p>
+        </div>
+      </div>
+      <div class="row mt2">
+        <div class="qty"><button>−</button><span>3</span><button disabled>+</button></div>
+      </div>
+    </div>
+
+    <button class="btn btn-danger st st-soldout mb2">구매 불가 품목 삭제</button>
+
+    <div class="card">
+      <div class="dl"><dt>정가 합계</dt><dd class="num">27,000원</dd></div>
+      <div class="dl"><dt>할인</dt><dd class="num brand">−8,100원</dd></div>
+      <div class="dl"><dt>결제 예정 금액</dt><dd class="price">18,900원</dd></div>
+      <p class="cap mt1">최종 금액은 주문서를 만들 때 그 시점의 할인가로 고정돼요</p>
+    </div>
+  </div>
+
+  <div class="scroll st st-loading">
+    <div class="card"><div class="skel" style="width:55%;height:20px"></div><div class="skel" style="width:35%"></div><div class="skel" style="width:45%;height:20px"></div></div>
+    <div class="card"><div class="skel" style="width:45%;height:20px"></div><div class="skel" style="width:30%"></div><div class="skel" style="width:40%;height:20px"></div></div>
+    <p class="cap" style="text-align:center">장바구니를 불러오는 중이에요</p>
+  </div>
+
+  <div class="scroll st st-empty">
+    <div class="empty">
+      <h3>장바구니가 비어 있어요</h3>
+      <p class="cap mb2">담아 둔 상품은 브라우저 세션 동안 유지돼요</p>
+      <a class="btn" href="sc-001-home-product-list.html">마감 할인 상품 보러 가기</a>
+    </div>
+  </div>
+
+  <!-- 하단 액션 바 -->
+  <div class="actionbar st st-default st-priced st-conflict st-restricted st-pending st-error">
+    <div class="row">
+      <div class="grow"><div class="cap">결제 예정 금액</div><div class="amt">18,900원</div></div>
+      <a class="btn btn-primary" style="width:150px" href="sc-005-order-sheet.html">주문하기</a>
+    </div>
+  </div>
+
+  <div class="actionbar st st-soldout">
+    <p class="cap warn mb2">구매할 수 없는 품목을 정리하면 주문할 수 있어요</p>
+    <div class="row">
+      <div class="grow"><div class="cap">결제 예정 금액</div><div class="amt">18,900원</div></div>
+      <button class="btn" style="width:150px" disabled>주문하기</button>
+    </div>
+  </div>
+
+  <div class="actionbar st st-loading">
+    <div class="row">
+      <div class="grow"><div class="cap">결제 예정 금액</div><div class="amt">—</div></div>
+      <button class="btn" style="width:150px" disabled>주문하기</button>
+    </div>
+  </div>
+
+  <!-- 선점 실패 시트 -->
+  <div class="dim st st-conflict">
+    <div class="sheet">
+      <h3>방금 다른 고객이 먼저 담았어요</h3>
+      <p class="cap">아래 품목의 수량이 부족해 주문서를 만들지 않았어요. 일부만 선점하지 않아요.</p>
+      <p class="cap mt1">· 삼겹살 500g — 요청 2개 / 남은 수량 1개</p>
+      <button class="btn btn-primary" onclick="setState('default')">장바구니 새로고침</button>
+    </div>
+  </div>
+
+  <!-- 주문 제한 시트 -->
+  <div class="dim st st-restricted">
+    <div class="sheet">
+      <h3>지금은 새 주문을 만들 수 없어요</h3>
+      <p class="cap">노쇼 3회 누적으로 2026-09-04 19:00까지 주문할 수 없어요. 이미 확정된 주문은 그대로 유지돼요.</p>
+      <a class="btn btn-primary" href="sc-014-mypage.html">제한 내용 확인하기</a>
+      <button class="btn" onclick="setState('default')">닫기</button>
+    </div>
+  </div>
+
+  <!-- 진행 중 주문서 시트 -->
+  <div class="dim st st-pending">
+    <div class="sheet">
+      <h3>진행 중인 주문서가 있어요</h3>
+      <p class="cap">주문서는 한 번에 하나만 만들 수 있어요. 진행 중인 주문서를 마치거나 포기해주세요.</p>
+      <a class="btn btn-primary" href="sc-005-order-sheet.html">주문서로 이동</a>
+      <button class="btn" onclick="setState('default')">닫기</button>
+    </div>
+  </div>
+
+  <!-- 통신 오류 시트 -->
+  <div class="dim st st-error">
+    <div class="sheet">
+      <h3>장바구니를 불러오지 못했어요</h3>
+      <p class="cap">잠시 뒤에 다시 시도해주세요.</p>
+      <button class="btn btn-primary" onclick="setState('default')">다시 시도</button>
+    </div>
+  </div>
+</div>
+
+<script>
+function setState(s){
+  var f=document.getElementById('frame'); f.setAttribute('data-state',s);
+  var els=document.querySelectorAll('.st');
+  for(var i=0;i<els.length;i++){ els[i].hidden = !els[i].classList.contains('st-'+s); }
+  var bs=document.querySelectorAll('.stbtn');
+  for(var j=0;j<bs.length;j++){ bs[j].className = 'stbtn' + (bs[j].getAttribute('data-s')===s?' on':''); }
+}
+setState('default');
+</script>
+</body>
+</html>

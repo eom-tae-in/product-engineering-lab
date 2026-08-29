@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SC-007 결제 확인 및 결과 — savePick 와이어프레임</title>
+<style>
+:root{--color-brand:#17795E;--color-brand-weak:#E7F4EF;--color-fresh:#2FA37A;--color-discount:#0B5FA5;--color-warning:#9A5B00;--color-warning-weak:#FDF3E3;--color-danger:#C0392B;--color-danger-weak:#FBECEA;--color-text:#1A1F1C;--color-text-weak:#6B7671;--color-surface:#FFFFFF;--color-bg:#F4F7F5;--color-border:#DFE6E2;--color-on-brand:#FFFFFF;--font-family:Pretendard,-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Noto Sans KR","Malgun Gothic",sans-serif;--space-1:4px;--space-2:8px;--space-3:12px;--space-4:16px;--space-6:24px;--space-8:32px;--radius-sm:6px;--radius-md:10px;--radius-lg:14px;--shadow-card:0 1px 2px rgba(26,31,28,.06);--shadow-sheet:0 -4px 16px rgba(26,31,28,.12)}
+*{box-sizing:border-box;margin:0;padding:0}
+[hidden]{display:none!important}
+body{font:400 15px/1.6 var(--font-family);color:var(--color-text);background:var(--color-border);padding:12px 0 40px}
+a{color:inherit;text-decoration:none}
+.meta{width:360px;margin:0 auto 12px;background:var(--color-text);color:var(--color-on-brand);border-radius:var(--radius-md);padding:10px 12px;font:400 13px/1.5 var(--font-family)}
+.meta b{font:600 17px/1.4 var(--font-family);display:block}
+.meta .fr{color:var(--color-border);word-break:keep-all}
+.meta a{color:var(--color-on-brand);text-decoration:underline}
+.states{width:360px;margin:0 auto 8px;display:flex;flex-wrap:wrap;gap:4px}
+.stbtn{min-height:32px;padding:4px 10px;border:1px solid var(--color-border);background:var(--color-surface);color:var(--color-text);border-radius:var(--radius-sm);font:400 13px/1.5 var(--font-family);cursor:pointer}
+.stbtn.on{background:var(--color-brand);border-color:var(--color-brand);color:var(--color-on-brand)}
+.frame{width:360px;height:640px;margin:0 auto;background:var(--color-bg);display:flex;flex-direction:column;overflow:hidden;position:relative;border:1px solid var(--color-border);border-radius:var(--radius-lg)}
+.appbar{flex:0 0 56px;display:flex;align-items:center;gap:8px;padding:0 16px;background:var(--color-surface);border-bottom:1px solid var(--color-border)}
+.appbar .ttl{font:600 17px/1.4 var(--font-family)}
+.appbar .back{width:44px;height:44px;margin-left:-12px;display:flex;align-items:center;justify-content:center;font-size:18px}
+.scroll{flex:1 1 auto;overflow-y:auto;overflow-x:hidden;padding:16px}
+.band{flex:0 0 auto;padding:10px 16px;font:400 13px/1.5 var(--font-family)}
+.band-warn{background:var(--color-warning-weak);color:var(--color-warning)}
+.band-brand{background:var(--color-brand-weak);color:var(--color-brand)}
+.timer{flex:0 0 44px;display:flex;align-items:center;justify-content:center;background:var(--color-brand-weak);color:var(--color-brand);font:600 15px/1.4 var(--font-family)}
+.timer.warn{background:var(--color-warning-weak);color:var(--color-warning)}
+.card{display:block;background:var(--color-surface);border:1px solid var(--color-border);border-radius:var(--radius-lg);box-shadow:var(--shadow-card);padding:16px;margin-bottom:12px}
+.cap{font:400 13px/1.5 var(--font-family);color:var(--color-text-weak)}
+.warn{color:var(--color-warning)}.danger{color:var(--color-danger)}.brand{color:var(--color-brand)}
+.price{font:700 20px/1.3 var(--font-family);font-variant-numeric:tabular-nums;letter-spacing:-.01em;color:var(--color-discount)}
+.row{display:flex;align-items:center;gap:8px}
+.between{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.grow{flex:1;min-width:0}
+.num{font-variant-numeric:tabular-nums}
+.mt1{margin-top:4px}.mt2{margin-top:8px}.mb2{margin-bottom:8px}
+.sec{font:600 17px/1.4 var(--font-family);margin-bottom:8px}
+.btn{display:flex;align-items:center;justify-content:center;width:100%;min-height:48px;border-radius:var(--radius-md);border:1px solid var(--color-border);background:var(--color-surface);color:var(--color-text);font:400 15px/1.6 var(--font-family);cursor:pointer;text-align:center}
+.btn-primary{min-height:52px;background:var(--color-brand);border-color:var(--color-brand);color:var(--color-on-brand);font-weight:600}
+.btn:disabled{background:var(--color-border);border-color:var(--color-border);color:var(--color-text-weak);cursor:not-allowed}
+.btn-text{min-height:44px;border:0;background:none;color:var(--color-text-weak);width:100%;font:400 15px/1.6 var(--font-family);cursor:pointer}
+.actionbar{flex:0 0 auto;padding:10px 16px;background:var(--color-surface);box-shadow:var(--shadow-sheet)}
+.dim{position:absolute;inset:0;background:rgba(26,31,28,.4);display:flex;align-items:flex-end}
+.dim.full{align-items:center;justify-content:center;background:var(--color-bg);flex-direction:column;padding:32px;text-align:center}
+.sheet{width:100%;background:var(--color-surface);border-radius:var(--radius-lg) var(--radius-lg) 0 0;box-shadow:var(--shadow-sheet);padding:16px}
+.sheet h3{font:600 17px/1.4 var(--font-family);margin-bottom:8px}
+.sheet .btn{margin-top:8px}
+.dl{display:flex;justify-content:space-between;padding:6px 0;font:400 15px/1.6 var(--font-family)}
+.dl dt{color:var(--color-text-weak);font:400 13px/1.5 var(--font-family)}
+</style>
+</head>
+<body>
+
+<div class="meta">
+  <b>SC-007 · 결제 확인 및 결과</b>
+  사용자: 고객 (PENDING 주문서 + 시간대 선택 완료 시에만 진입)
+  <div class="fr">FR-020, FR-021, FR-024, FR-025</div>
+  <div class="fr"><a href="index.html">화면 인덱스로</a></div>
+</div>
+
+<div class="states">
+  <button class="stbtn" data-s="default" onclick="setState('default')">기본</button>
+  <button class="stbtn" data-s="loading" onclick="setState('loading')">로딩(결제 중)</button>
+  <button class="stbtn" data-s="fail1" onclick="setState('fail1')">결제 실패 1회</button>
+  <button class="stbtn" data-s="fail2" onclick="setState('fail2')">결제 실패 2회</button>
+  <button class="stbtn" data-s="fail3" onclick="setState('fail3')">결제 실패 3회(최종)</button>
+  <button class="stbtn" data-s="timeout" onclick="setState('timeout')">무응답</button>
+  <button class="stbtn" data-s="amount" onclick="setState('amount')">금액 불일치</button>
+  <button class="stbtn" data-s="slotfull" onclick="setState('slotfull')">정원 소진</button>
+  <button class="stbtn" data-s="expired" onclick="setState('expired')">선점 만료</button>
+</div>
+
+<div class="frame" id="frame">
+  <div class="appbar st st-default st-loading st-fail1 st-fail2 st-timeout st-amount st-slotfull st-expired">
+    <a class="back" href="sc-006-pickup-slot.html">←</a>
+    <span class="ttl">결제</span>
+  </div>
+
+  <div class="timer st st-default st-loading st-amount st-slotfull">선점 시간 08:12 남음</div>
+  <div class="timer st st-fail1">선점 시간 08:12 남음</div>
+  <div class="timer warn st st-fail2 st-timeout">선점 시간 04:35 남음 · 시간은 연장되지 않아요</div>
+
+  <div class="scroll st st-default st-loading st-fail1 st-fail2 st-timeout st-amount st-slotfull st-expired">
+    <div class="card">
+      <div class="sec">픽업</div>
+      <div>오늘 20:00~20:30</div>
+      <p class="cap mt1">savePick 스토어 · 서울시 ○○구 ○○로 12</p>
+      <p class="cap">19:00까지 취소할 수 있어요</p>
+    </div>
+
+    <div class="card">
+      <div class="sec">주문 상품 2건</div>
+      <div class="between"><span>삼겹살 500g <span class="cap">×2</span></span><span class="num">16,800원</span></div>
+      <div class="between mt1"><span>대파 1단 <span class="cap">×1</span></span><span class="num">2,100원</span></div>
+      <div class="dl mt2"><dt>결제 확정 금액</dt><dd class="price">18,900원</dd></div>
+    </div>
+
+    <div class="card">
+      <p class="cap">가상 결제입니다. 실제 금전 거래는 일어나지 않아요.</p>
+      <p class="cap mt1">결제는 최대 3회까지 시도할 수 있어요.</p>
+      <p class="cap warn mt1 st st-fail1">1번 실패했어요 · 2번 더 시도할 수 있어요</p>
+      <p class="cap warn mt1 st st-fail2 st-timeout">2번 실패했어요 · 1번 더 시도할 수 있어요</p>
+    </div>
+
+    <button class="btn-text st st-default st-fail1 st-fail2 st-timeout" onclick="setState('expired')">주문서 포기</button>
+  </div>
+
+  <!-- 3회 최종 실패: 전체 화면 -->
+  <div class="scroll st st-fail3">
+    <div class="card" style="text-align:center;padding:32px 16px">
+      <h3 style="font:600 17px/1.4 var(--font-family)">주문이 종료됐어요</h3>
+      <p class="cap mt2">결제가 3회 실패해 이 주문서로는 다시 결제할 수 없어요.</p>
+      <p class="cap mt1">선점한 수량은 다시 판매 가능해졌어요.</p>
+    </div>
+    <a class="btn btn-primary" href="sc-004-cart.html">장바구니에서 다시 주문하기</a>
+    <a class="btn mt2" href="sc-009-order-history.html" style="margin-top:8px">주문 내역에서 확인하기</a>
+  </div>
+
+  <div class="actionbar st st-default st-amount st-slotfull st-expired">
+    <a class="btn btn-primary" href="sc-008-order-complete.html">18,900원 결제하기</a>
+  </div>
+
+  <div class="actionbar st st-loading">
+    <button class="btn" disabled>결제 결과를 확인하는 중이에요</button>
+    <p class="cap mt1" style="text-align:center">버튼을 다시 누를 수 없어요. 중복 결제를 막기 위해서예요</p>
+  </div>
+
+  <div class="actionbar st st-fail1 st-fail2 st-timeout">
+    <a class="btn btn-primary" href="sc-008-order-complete.html">다시 결제하기</a>
+  </div>
+
+  <!-- 결제 실패 1회 시트 -->
+  <div class="dim st st-fail1">
+    <div class="sheet">
+      <h3>결제가 완료되지 않았어요</h3>
+      <p class="cap">선점은 08:12 남았고, 2번 더 시도할 수 있어요.</p>
+      <button class="btn btn-primary" onclick="setState('fail2')">다시 결제하기</button>
+      <a class="btn" href="sc-006-pickup-slot.html">시간대 다시 고르기</a>
+      <button class="btn-text" onclick="setState('expired')">주문서 포기</button>
+    </div>
+  </div>
+
+  <!-- 결제 실패 2회 시트 -->
+  <div class="dim st st-fail2">
+    <div class="sheet">
+      <h3>결제가 완료되지 않았어요</h3>
+      <p class="cap">선점은 04:35 남았어요.</p>
+      <p class="warn">1번 더 시도할 수 있어요</p>
+      <button class="btn btn-primary" onclick="setState('fail3')">다시 결제하기</button>
+      <a class="btn" href="sc-006-pickup-slot.html">시간대 다시 고르기</a>
+    </div>
+  </div>
+
+  <!-- 무응답 시트 -->
+  <div class="dim st st-timeout">
+    <div class="sheet">
+      <h3>응답을 받지 못해 실패로 처리했어요</h3>
+      <p class="cap">시도 횟수 1회가 차감됐어요. 선점은 04:35 남았고, 1번 더 시도할 수 있어요.</p>
+      <button class="btn btn-primary" onclick="setState('fail3')">다시 결제하기</button>
+    </div>
+  </div>
+
+  <!-- 금액 불일치 시트 -->
+  <div class="dim st st-amount">
+    <div class="sheet">
+      <h3>주문 금액이 달라졌어요</h3>
+      <p class="cap">주문서를 다시 확인해주세요. 결제는 진행하지 않았어요.</p>
+      <a class="btn btn-primary" href="sc-005-order-sheet.html">주문서로 이동</a>
+    </div>
+  </div>
+
+  <!-- 결제 직전 정원 소진 시트 -->
+  <div class="dim st st-slotfull">
+    <div class="sheet">
+      <h3>선택한 시간대의 정원이 찼어요</h3>
+      <p class="cap">오늘 20:00~20:30 시간대가 정원 20건을 채웠어요. 결제는 진행하지 않았어요.</p>
+      <a class="btn btn-primary" href="sc-006-pickup-slot.html">다른 시간대 고르기</a>
+    </div>
+  </div>
+
+  <!-- 선점 만료 시트 -->
+  <div class="dim st st-expired">
+    <div class="sheet">
+      <h3>선점 시간이 끝났어요</h3>
+      <p class="cap">재시도 횟수가 남아 있어도 결제를 진행하지 않아요. 담아 둔 상품으로 다시 주문할 수 있어요.</p>
+      <a class="btn btn-primary" href="sc-004-cart.html">장바구니에서 다시 주문하기</a>
+    </div>
+  </div>
+</div>
+
+<script>
+function setState(s){
+  var f=document.getElementById('frame'); f.setAttribute('data-state',s);
+  var els=document.querySelectorAll('.st');
+  for(var i=0;i<els.length;i++){ els[i].hidden = !els[i].classList.contains('st-'+s); }
+  var bs=document.querySelectorAll('.stbtn');
+  for(var j=0;j<bs.length;j++){ bs[j].className = 'stbtn' + (bs[j].getAttribute('data-s')===s?' on':''); }
+}
+setState('default');
+</script>
+</body>
+</html>

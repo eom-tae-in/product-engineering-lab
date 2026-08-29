@@ -1,0 +1,65 @@
+spring:
+  application:
+    name: save-pick-api
+  datasource:
+    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:savepick}
+    username: ${DB_USERNAME:savepick}
+    password: ${DB_PASSWORD:savepick}
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate:
+        format_sql: true
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+    baseline-on-migrate: false
+
+server:
+  port: ${SERVER_PORT:8080}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+
+# 14-project-structure.md §8 — G1 확정값은 상수로 박지 않고 설정으로 뺀다.
+# 값을 바꾸려면 옆에 표시된 BR-###/FR-### 문서를 먼저 확인한다.
+savepick:
+  time-zone: Asia/Seoul                       # BR-028
+  hold:
+    ttl: PT10M                                # BR-007 선점 10분, 연장 없음
+    expiring-soon-threshold: PT60S            # 03 U1 (임시 채택)
+  payment:
+    max-attempts: 3                           # BR-012
+  order:
+    customer-cancel-deadline: PT1H            # BR-018 픽업 시작 1시간 전
+  pickup:
+    open-time: "10:00"                        # BR-014
+    close-time: "22:00"
+    slot-unit: PT30M                          # 30분 단위 24슬롯
+    default-slot-capacity: 20                 # BR-016
+    reservation-close-before: PT30M           # BR-015
+    selectable-days: 2                        # BR-013 D+0~D+1
+    no-show-grace: PT30M                      # BR-021
+  restriction:
+    no-show-window-days: 30                   # BR-023
+    no-show-threshold: 3
+    restriction-days: 7
+  auth:
+    access-token-ttl: PT30M                   # 12번 §2.1
+    refresh-session-ttl: P30D                 # FR-002
+    login-fail-threshold: 5                   # 03 A3
+    login-block-duration: PT10M
+  stock:
+    lock-timeout: PT3S                        # 13번 §3
+  batch:
+    hold-expiry:
+      interval: PT30S                         # BATCH-01 (BR-008 1분 이내)
+    product-closing:
+      interval: PT30S                         # BATCH-02
+    no-show:
+      interval: PT3M                          # BATCH-03 (BR-021 5분 이내)

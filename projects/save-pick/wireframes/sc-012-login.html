@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SC-012 로그인 — savePick 와이어프레임</title>
+<style>
+:root{--color-brand:#17795E;--color-brand-weak:#E7F4EF;--color-fresh:#2FA37A;--color-discount:#0B5FA5;--color-warning:#9A5B00;--color-warning-weak:#FDF3E3;--color-danger:#C0392B;--color-danger-weak:#FBECEA;--color-text:#1A1F1C;--color-text-weak:#6B7671;--color-surface:#FFFFFF;--color-bg:#F4F7F5;--color-border:#DFE6E2;--color-on-brand:#FFFFFF;--font-family:Pretendard,-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Noto Sans KR","Malgun Gothic",sans-serif;--radius-sm:6px;--radius-md:10px;--radius-lg:14px;--shadow-card:0 1px 2px rgba(26,31,28,.06);--shadow-sheet:0 -4px 16px rgba(26,31,28,.12)}
+*{box-sizing:border-box;margin:0;padding:0}
+[hidden]{display:none!important}
+body{font:400 15px/1.6 var(--font-family);color:var(--color-text);background:var(--color-border);padding:12px 0 40px}
+a{color:inherit;text-decoration:none}
+.meta{width:360px;margin:0 auto 12px;background:var(--color-text);color:var(--color-on-brand);border-radius:var(--radius-md);padding:10px 12px;font:400 13px/1.5 var(--font-family)}
+.meta b{font:600 17px/1.4 var(--font-family);display:block}
+.meta .fr{color:var(--color-border);word-break:keep-all}
+.meta a{color:var(--color-on-brand);text-decoration:underline}
+.states{width:360px;margin:0 auto 8px;display:flex;flex-wrap:wrap;gap:4px}
+.stbtn{min-height:32px;padding:4px 10px;border:1px solid var(--color-border);background:var(--color-surface);color:var(--color-text);border-radius:var(--radius-sm);font:400 13px/1.5 var(--font-family);cursor:pointer}
+.stbtn.on{background:var(--color-brand);border-color:var(--color-brand);color:var(--color-on-brand)}
+.frame{width:360px;height:640px;margin:0 auto;background:var(--color-bg);display:flex;flex-direction:column;overflow:hidden;position:relative;border:1px solid var(--color-border);border-radius:var(--radius-lg)}
+.appbar{flex:0 0 56px;display:flex;align-items:center;gap:8px;padding:0 16px;background:var(--color-surface);border-bottom:1px solid var(--color-border)}
+.appbar .ttl{font:600 17px/1.4 var(--font-family)}
+.appbar .back{width:44px;height:44px;margin-left:-12px;display:flex;align-items:center;justify-content:center;font-size:18px}
+.scroll{flex:1 1 auto;overflow-y:auto;overflow-x:hidden;padding:16px}
+.band{flex:0 0 auto;padding:10px 16px;font:400 13px/1.5 var(--font-family)}
+.band-danger{background:var(--color-danger-weak);color:var(--color-danger)}
+.band-brand{background:var(--color-brand-weak);color:var(--color-brand)}
+.card{display:block;background:var(--color-surface);border:1px solid var(--color-border);border-radius:var(--radius-lg);box-shadow:var(--shadow-card);padding:16px;margin-bottom:12px}
+.cap{font:400 13px/1.5 var(--font-family);color:var(--color-text-weak)}
+.danger{color:var(--color-danger)}
+.mt1{margin-top:4px}.mt2{margin-top:8px}.mb2{margin-bottom:8px}
+.field{margin-bottom:16px}
+.field label{display:block;font:400 13px/1.5 var(--font-family);color:var(--color-text-weak);margin-bottom:4px}
+.field input{width:100%;height:52px;border:1px solid var(--color-border);border-radius:var(--radius-md);padding:0 12px;font:400 15px/1.6 var(--font-family);background:var(--color-surface);color:var(--color-text)}
+.field input:disabled{background:var(--color-bg);color:var(--color-text-weak)}
+.field.err input{border-color:var(--color-danger)}
+.field .msg{font:400 13px/1.5 var(--font-family);color:var(--color-danger);margin-top:4px}
+.btn{display:flex;align-items:center;justify-content:center;width:100%;min-height:48px;border-radius:var(--radius-md);border:1px solid var(--color-border);background:var(--color-surface);color:var(--color-text);font:400 15px/1.6 var(--font-family);cursor:pointer;text-align:center}
+.btn-primary{min-height:52px;background:var(--color-brand);border-color:var(--color-brand);color:var(--color-on-brand);font-weight:600}
+.btn:disabled{background:var(--color-border);border-color:var(--color-border);color:var(--color-text-weak);cursor:not-allowed}
+.btn-text{min-height:44px;border:0;background:none;color:var(--color-brand);width:100%;font:400 15px/1.6 var(--font-family);cursor:pointer;display:flex;align-items:center;justify-content:center}
+.actionbar{flex:0 0 auto;padding:10px 16px;background:var(--color-surface);box-shadow:var(--shadow-sheet)}
+.dim{position:absolute;inset:0;background:rgba(26,31,28,.4);display:flex;align-items:flex-end}
+.sheet{width:100%;background:var(--color-surface);border-radius:var(--radius-lg) var(--radius-lg) 0 0;box-shadow:var(--shadow-sheet);padding:16px}
+.sheet h3{font:600 17px/1.4 var(--font-family);margin-bottom:8px}
+.sheet .btn{margin-top:8px}
+.logo{font:700 22px/1.3 var(--font-family);color:var(--color-brand);margin-bottom:8px}
+</style>
+</head>
+<body>
+
+<div class="meta">
+  <b>SC-012 · 로그인</b>
+  사용자: 비로그인 전용
+  <div class="fr">FR-002, FR-004</div>
+  <div class="fr"><a href="index.html">화면 인덱스로</a></div>
+</div>
+
+<div class="states">
+  <button class="stbtn" data-s="default" onclick="setState('default')">기본</button>
+  <button class="stbtn" data-s="loading" onclick="setState('loading')">로딩</button>
+  <button class="stbtn" data-s="fail" onclick="setState('fail')">오류(인증 실패)</button>
+  <button class="stbtn" data-s="locked" onclick="setState('locked')">오류(5회 잠금)</button>
+  <button class="stbtn" data-s="format" onclick="setState('format')">오류(형식)</button>
+  <button class="stbtn" data-s="error" onclick="setState('error')">오류(통신)</button>
+</div>
+
+<div class="frame" id="frame">
+  <div class="appbar">
+    <a class="back" href="sc-004-cart.html">←</a>
+    <span class="ttl">로그인</span>
+  </div>
+
+  <div class="band band-danger st st-fail">이메일 또는 비밀번호를 확인해주세요</div>
+  <div class="band band-danger st st-locked">로그인 시도가 많아 10분간 잠겼어요. 19:12 이후 다시 시도해주세요</div>
+
+  <div class="scroll">
+    <p class="logo">savePick</p>
+    <p class="cap mb2">주문하려면 로그인이 필요해요. 장바구니에 담은 상품은 그대로 유지돼요.</p>
+
+    <div class="field st st-default st-loading st-fail st-locked st-error">
+      <label for="email">이메일</label>
+      <input id="email" type="email" value="jihyun@example.com">
+    </div>
+    <div class="field err st st-format">
+      <label for="email2">이메일</label>
+      <input id="email2" type="text" value="jihyun.example.com">
+      <p class="msg">이메일 형식으로 입력해주세요</p>
+    </div>
+
+    <div class="field st st-default st-loading st-fail st-locked st-error st-format">
+      <label for="pw">비밀번호</label>
+      <input id="pw" type="password" value="********">
+    </div>
+
+    <p class="cap st st-loading">로그인하는 중이에요. 입력은 잠시 잠겨요.</p>
+  </div>
+
+  <div class="actionbar">
+    <button class="btn btn-primary st st-default st-fail st-error">로그인</button>
+    <button class="btn st st-loading" disabled>로그인하는 중이에요</button>
+    <div class="st st-locked">
+      <p class="cap mb2">19:12 이후 다시 시도할 수 있어요</p>
+      <button class="btn" disabled>로그인</button>
+    </div>
+    <div class="st st-format">
+      <p class="cap mb2">입력값을 확인해주세요</p>
+      <button class="btn" disabled>로그인</button>
+    </div>
+    <a class="btn-text" href="sc-013-signup.html">회원가입</a>
+  </div>
+
+  <div class="dim st st-error">
+    <div class="sheet">
+      <h3>로그인하지 못했어요</h3>
+      <p class="cap">잠시 뒤에 다시 시도해주세요.</p>
+      <button class="btn btn-primary" onclick="setState('default')">다시 시도</button>
+    </div>
+  </div>
+</div>
+
+<script>
+function setState(s){
+  var f=document.getElementById('frame'); f.setAttribute('data-state',s);
+  var els=document.querySelectorAll('.st');
+  for(var i=0;i<els.length;i++){ els[i].hidden = !els[i].classList.contains('st-'+s); }
+  var bs=document.querySelectorAll('.stbtn');
+  for(var j=0;j<bs.length;j++){ bs[j].className = 'stbtn' + (bs[j].getAttribute('data-s')===s?' on':''); }
+}
+setState('default');
+</script>
+</body>
+</html>

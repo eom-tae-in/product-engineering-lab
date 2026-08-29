@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  savePick 가로형 로고 (심볼 + 로고타입)
+  로고타입 서체: Pretendard 700 (폴백: Apple SD Gothic Neo, Noto Sans KR, sans-serif)
+  표기 규칙: s 소문자, P 대문자. SavePick / SAVEPICK 로 쓰지 않는다.
+  최소 사용 크기: 가로 96px
+-->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 168 32" role="img" aria-label="savePick">
+  <title>savePick</title>
+  <g>
+    <rect x="0" y="0" width="32" height="32" rx="9" fill="#17795E"/>
+    <path d="M8.4 16.9 L12.9 21.4"
+          fill="none" stroke="#FFFFFF" stroke-width="3.4" stroke-linecap="round"/>
+    <path d="M12.9 21.6 C12.9 15.6 16.9 11.1 24.0 10.2 C25.0 17.8 20.5 22.6 12.9 21.6 Z"
+          fill="#7BD0A8"/>
+    <path d="M13.6 20.9 C15.6 17.4 18.6 14.6 22.4 12.9"
+          fill="none" stroke="#17795E" stroke-width="1.1" stroke-linecap="round" opacity="0.55"/>
+  </g>
+  <text x="42" y="23"
+        font-family="Pretendard, 'Apple SD Gothic Neo', 'Noto Sans KR', sans-serif"
+        font-size="22" font-weight="700" letter-spacing="-0.6"
+        fill="#17795E">savePick</text>
+</svg>

@@ -1,0 +1,10 @@
+spring:
+  jpa:
+    hibernate:
+      ddl-auto: validate
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+
+# Testcontainers PostgreSQL이 @ServiceConnection으로 datasource를 주입한다.
+# 14-project-structure.md §1.1 — 제약·락 테스트는 반드시 실제 PostgreSQL에서 돌린다.

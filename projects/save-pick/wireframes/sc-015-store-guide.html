@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SC-015 매장·픽업 안내 — savePick 와이어프레임</title>
+<style>
+:root{--color-brand:#17795E;--color-brand-weak:#E7F4EF;--color-fresh:#2FA37A;--color-discount:#0B5FA5;--color-warning:#9A5B00;--color-warning-weak:#FDF3E3;--color-danger:#C0392B;--color-danger-weak:#FBECEA;--color-text:#1A1F1C;--color-text-weak:#6B7671;--color-surface:#FFFFFF;--color-bg:#F4F7F5;--color-border:#DFE6E2;--color-on-brand:#FFFFFF;--font-family:Pretendard,-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Noto Sans KR","Malgun Gothic",sans-serif;--radius-sm:6px;--radius-md:10px;--radius-lg:14px;--shadow-card:0 1px 2px rgba(26,31,28,.06);--shadow-sheet:0 -4px 16px rgba(26,31,28,.12)}
+*{box-sizing:border-box;margin:0;padding:0}
+[hidden]{display:none!important}
+body{font:400 15px/1.6 var(--font-family);color:var(--color-text);background:var(--color-border);padding:12px 0 40px}
+a{color:inherit;text-decoration:none}
+.meta{width:360px;margin:0 auto 12px;background:var(--color-text);color:var(--color-on-brand);border-radius:var(--radius-md);padding:10px 12px;font:400 13px/1.5 var(--font-family)}
+.meta b{font:600 17px/1.4 var(--font-family);display:block}
+.meta .fr{color:var(--color-border);word-break:keep-all}
+.meta a{color:var(--color-on-brand);text-decoration:underline}
+.states{width:360px;margin:0 auto 8px;display:flex;flex-wrap:wrap;gap:4px}
+.stbtn{min-height:32px;padding:4px 10px;border:1px solid var(--color-border);background:var(--color-surface);color:var(--color-text);border-radius:var(--radius-sm);font:400 13px/1.5 var(--font-family);cursor:pointer}
+.stbtn.on{background:var(--color-brand);border-color:var(--color-brand);color:var(--color-on-brand)}
+.frame{width:360px;height:640px;margin:0 auto;background:var(--color-bg);display:flex;flex-direction:column;overflow:hidden;position:relative;border:1px solid var(--color-border);border-radius:var(--radius-lg)}
+.appbar{flex:0 0 56px;display:flex;align-items:center;gap:8px;padding:0 16px;background:var(--color-surface);border-bottom:1px solid var(--color-border)}
+.appbar .ttl{font:600 17px/1.4 var(--font-family)}
+.appbar .back{width:44px;height:44px;margin-left:-12px;display:flex;align-items:center;justify-content:center;font-size:18px}
+.scroll{flex:1 1 auto;overflow-y:auto;overflow-x:hidden;padding:16px}
+.card{display:block;background:var(--color-surface);border:1px solid var(--color-border);border-radius:var(--radius-lg);box-shadow:var(--shadow-card);padding:16px;margin-bottom:12px}
+.cap{font:400 13px/1.5 var(--font-family);color:var(--color-text-weak)}
+.sec{font:600 17px/1.4 var(--font-family);margin-bottom:8px}
+.mt1{margin-top:4px}.mt2{margin-top:8px}.mb2{margin-bottom:8px}
+.dl{display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--color-border);font:400 15px/1.6 var(--font-family)}
+.dl:last-child{border-bottom:0}
+.dl dt{color:var(--color-text-weak);font:400 13px/1.5 var(--font-family)}
+.num{font-variant-numeric:tabular-nums}
+.pickno{font:700 40px/1.2 var(--font-family);font-variant-numeric:tabular-nums;color:var(--color-brand);text-align:center}
+.step{display:flex;gap:12px;align-items:flex-start;padding:8px 0}
+.step .no{width:28px;height:28px;flex:0 0 28px;border-radius:var(--radius-sm);background:var(--color-brand-weak);color:var(--color-brand);display:flex;align-items:center;justify-content:center;font:600 15px/1 var(--font-family)}
+.btn{display:flex;align-items:center;justify-content:center;width:100%;min-height:48px;border-radius:var(--radius-md);border:1px solid var(--color-border);background:var(--color-surface);color:var(--color-text);font:400 15px/1.6 var(--font-family);cursor:pointer;text-align:center}
+.btn-primary{min-height:52px;background:var(--color-brand);border-color:var(--color-brand);color:var(--color-on-brand);font-weight:600}
+.skel{background:var(--color-border);border-radius:var(--radius-sm);height:14px;margin:6px 0}
+.empty{text-align:center;padding:24px 16px}
+.empty h3{font:600 17px/1.4 var(--font-family);margin-bottom:8px}
+.dim{position:absolute;inset:0;background:rgba(26,31,28,.4);display:flex;align-items:flex-end}
+.sheet{width:100%;background:var(--color-surface);border-radius:var(--radius-lg) var(--radius-lg) 0 0;box-shadow:var(--shadow-sheet);padding:16px}
+.sheet h3{font:600 17px/1.4 var(--font-family);margin-bottom:8px}
+.sheet .btn{margin-top:8px}
+</style>
+</head>
+<body>
+
+<div class="meta">
+  <b>SC-015 · 매장·픽업 안내</b>
+  사용자: 비로그인, 고객 (권한 제한 없음)
+  <div class="fr">FR-033</div>
+  <div class="fr"><a href="index.html">화면 인덱스로</a></div>
+</div>
+
+<div class="states">
+  <button class="stbtn" data-s="default" onclick="setState('default')">기본(확정 주문 있음)</button>
+  <button class="stbtn" data-s="loading" onclick="setState('loading')">로딩</button>
+  <button class="stbtn" data-s="empty" onclick="setState('empty')">빈 상태(예정 픽업 없음)</button>
+  <button class="stbtn" data-s="error" onclick="setState('error')">오류</button>
+</div>
+
+<div class="frame" id="frame">
+  <div class="appbar">
+    <a class="back" href="sc-010-order-detail.html">←</a>
+    <span class="ttl">매장·픽업 안내</span>
+  </div>
+
+  <div class="scroll">
+    <!-- 예정 픽업 요약 -->
+    <div class="card st st-default st-error">
+      <div class="sec">예정된 픽업</div>
+      <p class="cap">픽업 번호</p>
+      <p class="pickno">042</p>
+      <div class="dl"><dt>픽업 시간대</dt><dd>오늘 20:00~20:30</dd></div>
+      <div class="dl"><dt>노쇼 전환</dt><dd>21:00</dd></div>
+      <p class="cap mt2">21:00까지 오지 않으면 노쇼로 처리돼요</p>
+    </div>
+
+    <div class="card st st-empty">
+      <div class="empty">
+        <h3>예정된 픽업이 없어요</h3>
+        <p class="cap">주문을 확정하면 여기에 픽업 번호와 시간대가 표시돼요</p>
+      </div>
+    </div>
+
+    <div class="card st st-loading">
+      <div class="skel" style="width:40%"></div>
+      <div class="skel" style="width:60%;height:32px"></div>
+      <div class="skel" style="width:70%"></div>
+      <p class="cap mt2" style="text-align:center">매장 정보를 불러오는 중이에요</p>
+    </div>
+
+    <div class="card st st-default st-empty st-error">
+      <div class="sec">savePick 스토어</div>
+      <div class="dl"><dt>주소</dt><dd>서울시 ○○구 ○○로 12</dd></div>
+      <div class="dl"><dt>연락처</dt><dd class="num">02-000-0000</dd></div>
+      <div class="dl"><dt>영업시간</dt><dd>10:00~22:00</dd></div>
+      <p class="cap mt2">지도와 실시간 위치 안내는 제공하지 않아요</p>
+    </div>
+
+    <div class="card st st-default st-empty st-error">
+      <div class="sec">픽업 절차</div>
+      <div class="step"><span class="no">1</span><div><div>시간대에 방문</div><p class="cap">고른 30분 구간 안에 매장으로 오세요</p></div></div>
+      <div class="step"><span class="no">2</span><div><div>픽업 번호 말하기</div><p class="cap">직원에게 세 자리 번호를 말해주세요</p></div></div>
+      <div class="step"><span class="no">3</span><div><div>수령 확인</div><p class="cap">상품을 확인하면 픽업 완료로 처리돼요</p></div></div>
+    </div>
+  </div>
+
+  <div class="dim st st-error">
+    <div class="sheet">
+      <h3>매장 정보를 불러오지 못했어요</h3>
+      <p class="cap">잠시 뒤에 다시 시도해주세요.</p>
+      <button class="btn btn-primary" onclick="setState('default')">다시 시도</button>
+    </div>
+  </div>
+</div>
+
+<script>
+function setState(s){
+  var f=document.getElementById('frame'); f.setAttribute('data-state',s);
+  var els=document.querySelectorAll('.st');
+  for(var i=0;i<els.length;i++){ els[i].hidden = !els[i].classList.contains('st-'+s); }
+  var bs=document.querySelectorAll('.stbtn');
+  for(var j=0;j<bs.length;j++){ bs[j].className = 'stbtn' + (bs[j].getAttribute('data-s')===s?' on':''); }
+}
+setState('default');
+</script>
+</body>
+</html>

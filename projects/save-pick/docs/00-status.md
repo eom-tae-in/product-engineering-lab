@@ -1,0 +1,175 @@
+# savePick 진행 상태
+최종 갱신: 2026-08-29
+
+| 게이트 | 상태 | 비고 |
+|---|---|---|
+| G0 부트스트랩 | done | docs / assets/logo / wireframes / deliverables 생성 |
+| G1 기획 | approved (2026-08-28) | 무조건 승인 · 값 변경 없음 · 01~05 확정 |
+| G2 디자인 | done | 06~09 + 로고 3종 + 와이어프레임 28화면 + index |
+| G2 기술 | done | 10~14 전량 생성 확인 |
+| G3 검토 | approved (2026-08-29) | 재작업(03·06·09) + 재검토 완료 · 01~17 전량 승인 |
+| G4 발행 | done (2026-08-29) | PPT 14슬라이드 · PDF 207쪽 · source-map 생성 완료 |
+
+승인 출처 기록:
+- G1 승인은 orchestrator를 호출한 조정자가 전달했다. orchestrator가 사용자 메시지를 직접 수신한 것은 아니다.
+- G3 진행 승인(2026-08-29)은 최상위 세션이 `AskUserQuestion` 도구로 사용자에게 직접 제시해 받은 응답이다("확인했고 G3 진행"). save-pick-orchestrator는 위임된 승인을 검증할 수 없다는 이유로 실행을 거부해, 최상위 세션이 `quality-reviewer`를 직접 호출해 G3를 진행했다.
+
+## G1 산출물 (확정)
+
+docs/01-service-plan.md · 02-user-scenarios.md · 03-functional-requirements.md(FR 49개) · 04-business-rules.md · 05-state-rules.md — 전부 approved.
+
+G1의 「가정 / 미확정」 14개 항목은 planner가 기록한 값 그대로 하위 설계의 전제로 고정했다.
+
+## G2 산출물 (전량 생성 확인)
+
+| 산출물 | 소유 Agent | 확인 |
+|---|---|---|
+| docs/06-screen-list.md | experience-designer | 화면 28개 정의 |
+| docs/07-user-flows.md | experience-designer | 고객·관리자 흐름 분리 |
+| docs/08-brand-guide.md | experience-designer | 컬러 토큰·다크모드·로고 규격 |
+| docs/09-ui-design-brief.md | experience-designer | §7 와이어프레임 제작 지침 포함 |
+| assets/logo/logo-full.svg, logo-symbol.svg, logo-mono.svg | experience-designer | 3종 |
+| wireframes/*.html | experience-designer | 28화면 + index.html = 29개 |
+| docs/10-erd.md | technical-architect | 엔티티 19개 |
+| docs/11-api-spec.md | technical-architect | 엔드포인트 46개 |
+| docs/12-auth.md | technical-architect | 권한 매트릭스 46+배치6 |
+| docs/13-inventory-concurrency.md | technical-architect | 동시성 6항목 |
+| docs/14-project-structure.md | technical-architect | 스택·계층·명명 |
+
+orchestrator 직접 검증: 화면 ID 28개(SC-001~015, SC-101~113) 전부 파일 존재. 전체 `href` 수집 대조 결과 참조 파일명이 모두 실존 → 깨진 링크 0.
+
+### 중단·재개 이력
+- 기술 트랙 1차 실행이 `10`, `11` 완료 후 API 세션 한도(429)로 중단 → 누락분 `12`~`14`만 재실행해 완료.
+- 디자인 트랙 1차 실행이 `06`~`09`·로고 완료 후 와이어프레임 착수 단계에서 429로 중단 → 와이어프레임만 재실행해 28화면 완료.
+- 두 경우 모두 전체 재실행하지 않고 누락분만 처리했다.
+- 재실행 중 `11-api-spec.md` §0.5에 `INTERNAL_ERROR`(500) 1행이 추가됐다(소유 Agent 본인 수정).
+
+## G3 검토 시 우선 확인할 접점 후보
+
+두 트랙은 서로의 산출물을 참조하지 않고 병렬 작성됐다. 아래는 orchestrator가 미리 지목하는 검증 대상이다.
+
+| # | 접점 | 확인할 것 |
+|---|---|---|
+| X1 | 화면 오류 상태 ↔ API 오류 코드 | 06의 오류 상태 표기와 11 §0.5 카탈로그가 1:1 대응하는지. 특히 `OUT_OF_STOCK`, `CANCEL_NOT_ALLOWED`, `ORDER_RESTRICTED`, 신규 `INTERNAL_ERROR` |
+| X2 | 선점 만료 UI ↔ 중간 상태 | 13의 "주문 PENDING · 선점 EXPIRED" 최대 30초 공존 구간이 SC-005·006·007 만료 시트 동작과 모순되지 않는지 |
+| X3 | 취소 재전송 | 기술은 409 `CANCEL_NOT_ALLOWED`, 화면(SC-011)은 취소 완료 후 SC-010 복귀. 재전송 시 사용자에게 보일 화면이 정의됐는지 |
+| X4 | 관리자 세션 수명 | 액세스 30분 / 리프레시 30일이 SC-101~113 매장 운영 시나리오와 맞는지 |
+| X5 | 락 타임아웃 노출 | 13의 `lock_timeout` 3초 초과 → `INTERNAL_ERROR` 500이 SC-004·005에 오류 상태로 정의돼 있는지 |
+| X6 | 픽업 정원 점유 시점 | 정원 점유가 결제 성공 시(G1 확정)인데 SC-006 시간대 칩의 "정원 마감" 표시 시점과 어긋나지 않는지 |
+| X7 | 재고 변경 이력 화면 ↔ 원장 | SC-106이 표시하는 사유 항목이 `stock_ledgers.reason` 값 집합과 일치하는지 |
+| X8 | 마감 자동 전환 이력 | 13/12는 미기록(actor_id NOT NULL), SC-106은 이력 표시. 자동 전환 건이 화면에서 빈칸으로 보이지 않는지 |
+
+## G3 산출물 (2026-08-29)
+
+| 산출물 | 내용 |
+|---|---|
+| docs/15-review-report.md | 3방향 추적표 · X1~X8 판정 · 용어 통일표 · 문서별 승인 판정 |
+| docs/16-test-plan.md | TC-001~TC-124 (FR 49개 전량 커버 + 동시성/멱등성/권한/접점 전용) |
+| docs/17-mvp-scope.md | MVP 완료 기준 · G4 게이팅 항목 · 비게이팅 미확정 항목 |
+
+### X1~X8 판정 결과
+
+| # | 접점 | 판정 |
+|---|---|---|
+| X1 | 화면 오류 ↔ API 오류 코드 | **문제 있음** — `INTERNAL_ERROR`(500) 대응 화면 없음. `CART_ITEM_LIMIT_EXCEEDED`, 결제시점 `SLOT_CLOSED`도 누락 |
+| X2 | 선점 만료 UI ↔ 중간 상태 | 문제 없음 |
+| X3 | 취소 재전송 | **문제 있음(경미)** — SC-011이 CANCELED 재전송 사례를 정의하지 않음 |
+| X4 | 관리자 세션 수명 | 문제 없음 (T2는 정책 결정 사안이지 문서 결함 아님) |
+| X5 | 락 타임아웃 노출 | **문제 있음** — X1과 동일 근본 원인 |
+| X6 | 픽업 정원 점유 시점 | 문제 없음 |
+| X7 | 재고 변경 이력 ↔ 원장 | **문제 있음(근본)** — "노쇼 미복구"는 BR-022상 원장에 기록될 수 없는 값. HOLD_RELEASE/HOLD_EXPIRE 병합, CANCEL_DISCARD 표시 누락도 확인 |
+| X8 | 마감 자동 전환 이력 | 문제 없음 (SC-106 한정, 단 `product_change_logs` 감사 이력 자체가 어느 화면에도 없는 별도 공백 존재 — T7과 동일 근본) |
+
+### 문서별 승인 판정 — 전체 조건부 (반려 아님)
+
+- **승인 (11)**: 01, 02, 04, 05, 07, 08, 10, 11, 12, 13, 14
+- **수정 필요 (3)**:
+  - `03-functional-requirements.md` (소유: product-planner) — FR-047 "노쇼 미복구" 완료조건 재정의 (X7)
+  - `06-screen-list.md` (소유: experience-designer) — INTERNAL_ERROR/SLOT_CLOSED/CART_ITEM_LIMIT_EXCEEDED 오류 상태 추가(X1·X5), SC-106 사유 재구성(X7), SC-011 취소 재전송 문구 분기(X3), SC-112 카운트다운 배지 정의(D4)
+  - `09-ui-design-brief.md` (소유: experience-designer) — 상품 카드 높이 규격 수정(D3), 주문번호 형식을 기술 확정값 `ORD-YYYYMMDD-NNNNNN`으로 통일
+
+부수 발견(15 §5~6): 게스트 장바구니 보관 방식이 06 vs 10 간 상이(U2 관련), 주문번호 형식이 와이어프레임 8개에서 불일치.
+
+### 재작업 및 재검토 (2026-08-29)
+
+사용자 승인(AskUserQuestion "지금 재작업 진행")에 따라 아래를 실행했다.
+
+| 문서/파일 | 소유 Agent | 수정 내용 |
+|---|---|---|
+| docs/03-functional-requirements.md | product-planner | FR-047 완료조건에서 "노쇼 미복구" 삭제, `stock_ledgers.reason` 실제 7종과 1:1 재정의 (X7) |
+| docs/06-screen-list.md | experience-designer | SC-003·004·005·007 오류 상태 추가(X1·X5), SC-106 사유 7종 재구성(X7), SC-011 취소 재전송 3분기 문구(X3), SC-112 전환 예정 배지 규칙 신설(D4). 가정 A11~A13 추가 |
+| docs/09-ui-design-brief.md | experience-designer | 상품 카드 높이 128px→약 170px(D3), 주문번호 예시 `ORD-YYYYMMDD-NNNNNN` 통일 |
+| wireframes/ 8개 파일 | experience-designer | 주문번호 표기 23곳을 `ORD-YYYYMMDD-NNNNNN`으로 통일 |
+| wireframes/sc-106-stock-history.html | experience-designer | 필터 칩·예시 카드를 03·06과 동일한 7종 사유 체계로 재구성 |
+
+**재검토(`quality-reviewer`) 결과: 전항목 해소 확인, 03·06·09 최종 승인.** `docs/15-review-report.md`에 "재검토(2026-08-29)" 절 추가, `docs/16-test-plan.md`·`docs/17-mvp-scope.md`도 갱신 완료.
+
+비차단 잔여 사항(게이팅 아님, 기록만 — 필요 시 추후 정리):
+- SC-011 와이어프레임 데모가 문서의 3분기 문구 중 COMPLETED 사례만 구현
+- 04(BR-022)에 03(FR-047)으로의 역참조 없음
+
+## G4 산출물 (2026-08-29)
+
+| 산출물 | 내용 |
+|---|---|
+| deliverables/save-pick-overview.pptx | 발표용 14슬라이드(16:9). 문제·솔루션·MVP 범위·화면·업무규칙·동시성·ERD·브랜드·완료기준·미확정 목록 |
+| deliverables/save-pick-spec.pdf | 상세본 207쪽. 표지·목차·docs 01~17 전문·부록A(3방향 추적표)·부록B(전체 미확정 목록 취합) |
+| deliverables/source-map.md | 슬라이드/페이지 ↔ 출처 문서 대조표 |
+
+내용은 승인된 docs/01~17 원문만 재구성했으며 신규 수치·요구사항 창작 없음(documentation-publisher 자체 확인). 브랜드 가이드(08) 컬러·로고 적용.
+
+## 다음 작업
+- 파이프라인의 4개 게이트(G0~G4) 전량 완료. 사용자가 deliverables/ 결과물을 직접 확인 후 최종 승인 또는 수정 지시.
+- 수정이 필요하면 해당 게이트 소유 Agent만 재실행.
+
+## 사용자 확인 필요 항목
+
+### G1 확정값 (변경 없이 유지)
+
+| # | 사항 | 확정값 |
+|---|---|---|
+| 1 | 할인 구간·할인율 | 24h/6h/2h 경계 · 0·30·50·70% |
+| 2 | 재고 선점 유효 시간 | 10분 |
+| 3 | 결제 실패 시 선점 처리 | 선점 유지 후 3회까지 재시도 |
+| 4 | 고객 취소 마감 | 픽업 시작 1시간 전 |
+| 5 | 노쇼 유예 시간 | 픽업 종료 후 30분 |
+| 6 | 노쇼 제재 강도 | 30일 3회 → 7일 주문 제한 |
+| 7 | 매장 영업시간 | 10:00~22:00 |
+| 8 | 픽업 슬롯 정원 | 30분 슬롯당 20건 |
+| 9 | 픽업 정원 점유 시점 | 결제 성공 시 |
+| 10 | READY 상태 도입 | 선택 경유 상태로 포함 |
+| 11 | 마감 후 취소분 처리 | 총 재고 차감 + 폐기 기록 |
+| 12 | 로그인 식별자 | 이메일 |
+| 13 | 픽업 번호 형식 | 영업일 내 3자리 순번 |
+| 14 | 선택 우선순위 FR | FR-012·047·051·058 포함 |
+
+### G2 기술 트랙 신규 가정
+
+| # | 사항 | 채택값 | 쟁점 |
+|---|---|---|---|
+| T1 | 스택 선택 | Java 21 + Spring Boot 3.3 + PostgreSQL 15 | 기획에 지정된 바 없는 신규 결정 |
+| T2 | 관리자 세션 수명 | 고객과 동일 (액세스 30분 / 리프레시 30일) | 매장 공용 단말이면 12시간이 적절 |
+| T3 | 가상 결제 판정기 타임아웃 | 대기 없이 즉시 TIMEOUT 반환 | 단일 트랜잭션 전제와의 해석 문제 |
+| T4 | 선점 만료 중간 상태 | 최대 30초간 주문 PENDING · 선점 EXPIRED 공존 | 해당 구간 고객 조작 불가는 확인됨 |
+| T5 | 취소 재전송 응답 | 409 CANCEL_NOT_ALLOWED | 멱등 200을 원하면 11번 수정 필요 |
+| T6 | 관리자 재고 조정 충돌 방어 | 없음 (마지막 요청 우선) | expectedTotalQuantity 도입 시 API-109 변경 |
+| T7 | 상품 마감 자동 전환 이력 | 미기록 (actor_id NOT NULL 제약) | 감사 추적 필요 시 10번 스키마 변경 |
+
+### G2 디자인 트랙 신규 가정
+
+| # | 사항 | 채택값 | 쟁점 |
+|---|---|---|---|
+| D1 | 와이어프레임 폴더 구조 | `wireframes/` 평면 | wireframe-kit은 customer/·admin/ 분리 예시. 분리하려면 링크 경로 전면 수정 |
+| D2 | 예시 데이터 | 주문번호 SP-20260828-0117, 고객명 김지현, 매장 주소·전화 더미 | 실제 매장 정보 미정 |
+| D3 | 상품 카드 높이 | 실제 약 170px (09 스케치는 128px) | 128px 유지하려면 표시 항목 축소 또는 썸네일 제거 필요 |
+| D4 | SC-112 「유예 12분 남음」 배지 | 잔여 시간 표기 추가 | 06에는 전환 예정 "시각"만 정의. 카운트다운은 선점 타이머 전용 규칙과 충돌 소지 |
+| D5 | SC-111 시간대 행 | 24개 중 대표 7개만 렌더 | 와이어프레임 가독성 목적 축약 |
+| D6 | SC-113 휴무일 입력 방식 | 목록 + 「휴무일 추가」 버튼 | 06에 「휴무일 지정」만 있어 UI 형태 임의 결정 |
+| D7 | 고객 하단 탭 4개 | 홈/장바구니/주문내역/마이페이지 | 06 A1 |
+| D8 | 주문 3단계 분리 | SC-005·006·007 | 06 A2. 합치면 오류 상태 정의 위치 변경 |
+
+### 디자인 문서에 이미 기록된 미확정 (06 U1~U5)
+- U1 선점 만료 임박 안내 시점: 1분 전 채택 / 3분 전 / 없음
+- U2 미로그인 장바구니 보관: 브라우저 세션 한정 / 7일
+- U3 선택 우선순위 FR 포함 여부 (G1 #14와 동일 쟁점)
+- U5 주문 제한 계정 배너 상시 노출 여부

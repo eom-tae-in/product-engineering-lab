@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>savePick 와이어프레임 인덱스</title>
+<style>
+:root{--color-brand:#17795E;--color-brand-weak:#E7F4EF;--color-fresh:#2FA37A;--color-discount:#0B5FA5;--color-warning:#9A5B00;--color-warning-weak:#FDF3E3;--color-danger:#C0392B;--color-danger-weak:#FBECEA;--color-text:#1A1F1C;--color-text-weak:#6B7671;--color-surface:#FFFFFF;--color-bg:#F4F7F5;--color-border:#DFE6E2;--color-on-brand:#FFFFFF;--font-family:Pretendard,-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Noto Sans KR","Malgun Gothic",sans-serif;--radius-sm:6px;--radius-md:10px;--radius-lg:14px;--shadow-card:0 1px 2px rgba(26,31,28,.06)}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font:400 15px/1.6 var(--font-family);color:var(--color-text);background:var(--color-bg);padding:24px 16px 48px}
+a{color:inherit;text-decoration:none}
+.wrap{max-width:360px;margin:0 auto}
+h1{font:700 22px/1.3 var(--font-family);color:var(--color-brand);margin-bottom:4px}
+h2{font:600 17px/1.4 var(--font-family);margin:24px 0 8px}
+.cap{font:400 13px/1.5 var(--font-family);color:var(--color-text-weak)}
+.card{background:var(--color-surface);border:1px solid var(--color-border);border-radius:var(--radius-lg);box-shadow:var(--shadow-card);padding:16px;margin-bottom:12px}
+.list{background:var(--color-surface);border:1px solid var(--color-border);border-radius:var(--radius-lg);overflow:hidden}
+.list a{display:block;padding:12px 16px;border-bottom:1px solid var(--color-border);min-height:56px}
+.list a:last-child{border-bottom:0}
+.id{font:600 15px/1.4 var(--font-family);font-variant-numeric:tabular-nums}
+.fr{font:400 13px/1.5 var(--font-family);color:var(--color-text-weak);word-break:keep-all}
+.flow{background:var(--color-brand-weak);border-radius:var(--radius-md);padding:12px 16px;margin-bottom:12px}
+.flow b{color:var(--color-brand)}
+.mt1{margin-top:4px}.mb2{margin-bottom:8px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>savePick 와이어프레임</h1>
+  <p class="cap mb2">360 × 640px 모바일 기준 · 라이트 모드 · 화면 28개</p>
+
+  <div class="card">
+    <p class="cap">각 화면 파일 상단에 화면 ID·사용자·관련 FR 메타 바와 상태 전환 토글이 있어요. 색상은 <b>08-brand-guide.md</b> 8장 토큰만 사용했어요.</p>
+  </div>
+
+  <div class="flow">
+    <b>고객 주문 흐름 (클릭으로 끝까지 진행)</b>
+    <p class="cap mt1">SC-001 → SC-003 → SC-004 → SC-005 → SC-006(20:00 칩) → SC-007 → SC-008</p>
+  </div>
+  <div class="flow">
+    <b>예외 경로</b>
+    <p class="cap mt1">결제 실패: SC-007 상태 토글 「결제 실패 1회」 → 시트의 「다시 결제하기」 → 2회 → 3회 최종</p>
+    <p class="cap mt1">선점 만료: SC-005 「주문서 포기」 또는 상태 토글 「선점 만료」 → SC-004 복귀</p>
+  </div>
+  <div class="flow">
+    <b>관리자 주문 처리 흐름</b>
+    <p class="cap mt1">SC-101 → SC-102 → SC-108 → SC-110 → 「픽업 완료」 (또는 SC-102 번호 입력 → SC-109 → SC-110)</p>
+  </div>
+
+  <h2>고객 화면 15개</h2>
+  <div class="list">
+    <a href="sc-001-home-product-list.html"><span class="id">SC-001 홈 · 상품 목록</span><div class="fr">FR-004, FR-010, FR-012, FR-014, FR-015, FR-034</div></a>
+    <a href="sc-002-product-search.html"><span class="id">SC-002 상품 검색</span><div class="fr">FR-011, FR-014</div></a>
+    <a href="sc-003-product-detail.html"><span class="id">SC-003 상품 상세</span><div class="fr">FR-013, FR-014, FR-015, FR-016, FR-034</div></a>
+    <a href="sc-004-cart.html"><span class="id">SC-004 장바구니</span><div class="fr">FR-014, FR-016, FR-017, FR-018, FR-019, FR-034</div></a>
+    <a href="sc-005-order-sheet.html"><span class="id">SC-005 주문서 작성</span><div class="fr">FR-005, FR-018, FR-019, FR-020, FR-021, FR-032</div></a>
+    <a href="sc-006-pickup-slot.html"><span class="id">SC-006 픽업 날짜·시간대 선택</span><div class="fr">FR-005, FR-020, FR-022, FR-023</div></a>
+    <a href="sc-007-payment.html"><span class="id">SC-007 결제 확인 및 결과</span><div class="fr">FR-020, FR-021, FR-024, FR-025</div></a>
+    <a href="sc-008-order-complete.html"><span class="id">SC-008 주문 완료</span><div class="fr">FR-026, FR-030, FR-033</div></a>
+    <a href="sc-009-order-history.html"><span class="id">SC-009 주문 내역</span><div class="fr">FR-027</div></a>
+    <a href="sc-010-order-detail.html"><span class="id">SC-010 주문 상세</span><div class="fr">FR-005, FR-028, FR-030, FR-031, FR-033</div></a>
+    <a href="sc-011-order-cancel.html"><span class="id">SC-011 주문 취소 확인</span><div class="fr">FR-029, FR-030</div></a>
+    <a href="sc-012-login.html"><span class="id">SC-012 로그인</span><div class="fr">FR-002, FR-004</div></a>
+    <a href="sc-013-signup.html"><span class="id">SC-013 회원가입</span><div class="fr">FR-001</div></a>
+    <a href="sc-014-mypage.html"><span class="id">SC-014 마이페이지</span><div class="fr">FR-002, FR-003, FR-004, FR-031, FR-032</div></a>
+    <a href="sc-015-store-guide.html"><span class="id">SC-015 매장·픽업 안내</span><div class="fr">FR-033</div></a>
+  </div>
+
+  <h2>관리자 화면 13개</h2>
+  <div class="list">
+    <a href="sc-101-admin-login.html"><span class="id">SC-101 관리자 로그인</span><div class="fr">FR-002, FR-004</div></a>
+    <a href="sc-102-admin-home.html"><span class="id">SC-102 관리자 홈</span><div class="fr">FR-004, FR-048, FR-055</div></a>
+    <a href="sc-103-product-manage.html"><span class="id">SC-103 상품 관리 목록</span><div class="fr">FR-042, FR-044, FR-046</div></a>
+    <a href="sc-104-product-edit.html"><span class="id">SC-104 상품 등록·수정</span><div class="fr">FR-040, FR-041, FR-042, FR-043</div></a>
+    <a href="sc-105-stock-manage.html"><span class="id">SC-105 재고 현황·조정</span><div class="fr">FR-045, FR-046</div></a>
+    <a href="sc-106-stock-history.html"><span class="id">SC-106 재고 변경 이력</span><div class="fr">FR-047</div></a>
+    <a href="sc-107-discount-policy.html"><span class="id">SC-107 할인 구간 정책</span><div class="fr">FR-044</div></a>
+    <a href="sc-108-admin-order-list.html"><span class="id">SC-108 주문 목록</span><div class="fr">FR-048</div></a>
+    <a href="sc-109-pickup-number.html"><span class="id">SC-109 픽업 번호 조회</span><div class="fr">FR-049, FR-052</div></a>
+    <a href="sc-110-admin-order-detail.html"><span class="id">SC-110 주문 상세 (관리자)</span><div class="fr">FR-050, FR-051, FR-052, FR-054</div></a>
+    <a href="sc-111-pickup-slot-status.html"><span class="id">SC-111 시간대별 픽업 현황</span><div class="fr">FR-051, FR-055, FR-058</div></a>
+    <a href="sc-112-no-show-list.html"><span class="id">SC-112 노쇼 목록</span><div class="fr">FR-053</div></a>
+    <a href="sc-113-pickup-settings.html"><span class="id">SC-113 픽업 운영 설정</span><div class="fr">FR-056, FR-057, FR-058</div></a>
+  </div>
+
+  <h2>적용한 확정 수치</h2>
+  <div class="card">
+    <p class="cap">할인율 0 / 30 / 50 / 70% · 선점 10분(연장 없음) · 취소 마감 픽업 1시간 전 · 픽업 D+0~D+1, 10:00~22:00, 30분 단위 24슬롯, 슬롯 정원 20건, 예약 마감 시작 30분 전 · 노쇼 유예 30분, 30일 3회 시 7일 제한 · 결제 최대 3회 시도 · 픽업 번호 3자리(042)</p>
+  </div>
+</div>
+</body>
+</html>

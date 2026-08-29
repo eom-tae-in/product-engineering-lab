@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SC-006 픽업 날짜·시간대 선택 — savePick 와이어프레임</title>
+<style>
+:root{--color-brand:#17795E;--color-brand-weak:#E7F4EF;--color-fresh:#2FA37A;--color-discount:#0B5FA5;--color-warning:#9A5B00;--color-warning-weak:#FDF3E3;--color-danger:#C0392B;--color-danger-weak:#FBECEA;--color-text:#1A1F1C;--color-text-weak:#6B7671;--color-surface:#FFFFFF;--color-bg:#F4F7F5;--color-border:#DFE6E2;--color-on-brand:#FFFFFF;--font-family:Pretendard,-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Noto Sans KR","Malgun Gothic",sans-serif;--space-1:4px;--space-2:8px;--space-3:12px;--space-4:16px;--space-6:24px;--space-8:32px;--radius-sm:6px;--radius-md:10px;--radius-lg:14px;--shadow-card:0 1px 2px rgba(26,31,28,.06);--shadow-sheet:0 -4px 16px rgba(26,31,28,.12)}
+*{box-sizing:border-box;margin:0;padding:0}
+[hidden]{display:none!important}
+body{font:400 15px/1.6 var(--font-family);color:var(--color-text);background:var(--color-border);padding:12px 0 40px}
+a{color:inherit;text-decoration:none}
+.meta{width:360px;margin:0 auto 12px;background:var(--color-text);color:var(--color-on-brand);border-radius:var(--radius-md);padding:10px 12px;font:400 13px/1.5 var(--font-family)}
+.meta b{font:600 17px/1.4 var(--font-family);display:block}
+.meta .fr{color:var(--color-border);word-break:keep-all}
+.meta a{color:var(--color-on-brand);text-decoration:underline}
+.states{width:360px;margin:0 auto 8px;display:flex;flex-wrap:wrap;gap:4px}
+.stbtn{min-height:32px;padding:4px 10px;border:1px solid var(--color-border);background:var(--color-surface);color:var(--color-text);border-radius:var(--radius-sm);font:400 13px/1.5 var(--font-family);cursor:pointer}
+.stbtn.on{background:var(--color-brand);border-color:var(--color-brand);color:var(--color-on-brand)}
+.frame{width:360px;height:640px;margin:0 auto;background:var(--color-bg);display:flex;flex-direction:column;overflow:hidden;position:relative;border:1px solid var(--color-border);border-radius:var(--radius-lg)}
+.appbar{flex:0 0 56px;display:flex;align-items:center;gap:8px;padding:0 16px;background:var(--color-surface);border-bottom:1px solid var(--color-border)}
+.appbar .ttl{font:600 17px/1.4 var(--font-family)}
+.appbar .back{width:44px;height:44px;margin-left:-12px;display:flex;align-items:center;justify-content:center;font-size:18px}
+.scroll{flex:1 1 auto;overflow-y:auto;overflow-x:hidden;padding:16px}
+.band{flex:0 0 auto;padding:10px 16px;font:400 13px/1.5 var(--font-family)}
+.band-warn{background:var(--color-warning-weak);color:var(--color-warning)}
+.band-brand{background:var(--color-brand-weak);color:var(--color-brand)}
+.timer{flex:0 0 44px;display:flex;align-items:center;justify-content:center;background:var(--color-brand-weak);color:var(--color-brand);font:600 15px/1.4 var(--font-family)}
+.timer.warn{background:var(--color-warning-weak);color:var(--color-warning)}
+.card{display:block;background:var(--color-surface);border:1px solid var(--color-border);border-radius:var(--radius-lg);box-shadow:var(--shadow-card);padding:16px;margin-bottom:12px}
+.cap{font:400 13px/1.5 var(--font-family);color:var(--color-text-weak)}
+.warn{color:var(--color-warning)}.danger{color:var(--color-danger)}.brand{color:var(--color-brand)}
+.row{display:flex;align-items:center;gap:8px}
+.between{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.grow{flex:1;min-width:0}
+.mt1{margin-top:4px}.mt2{margin-top:8px}.mb2{margin-bottom:8px}
+.sec{font:600 17px/1.4 var(--font-family);margin-bottom:8px}
+.btn{display:flex;align-items:center;justify-content:center;width:100%;min-height:48px;border-radius:var(--radius-md);border:1px solid var(--color-border);background:var(--color-surface);color:var(--color-text);font:400 15px/1.6 var(--font-family);cursor:pointer;text-align:center}
+.btn-primary{min-height:52px;background:var(--color-brand);border-color:var(--color-brand);color:var(--color-on-brand);font-weight:600}
+.btn:disabled{background:var(--color-border);border-color:var(--color-border);color:var(--color-text-weak);cursor:not-allowed}
+.btn-text{min-height:44px;border:0;background:none;color:var(--color-brand);width:100%;font:400 15px/1.6 var(--font-family);cursor:pointer}
+.actionbar{flex:0 0 auto;padding:10px 16px;background:var(--color-surface);box-shadow:var(--shadow-sheet)}
+.actionbar .amt{font:700 20px/1.3 var(--font-family);font-variant-numeric:tabular-nums;white-space:nowrap}
+.seg{display:flex;gap:8px;margin-bottom:12px}
+.seg button{flex:1;min-height:44px;border:1px solid var(--color-border);background:var(--color-surface);border-radius:var(--radius-md);font:400 15px/1.6 var(--font-family);color:var(--color-text);cursor:pointer}
+.seg button.on{background:var(--color-brand);border-color:var(--color-brand);color:var(--color-on-brand)}
+.chips{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.chip{min-height:56px;border:1px solid var(--color-border);background:var(--color-surface);border-radius:var(--radius-sm);display:flex;flex-direction:column;align-items:center;justify-content:center;font:400 13px/1.3 var(--font-family);color:var(--color-text);cursor:pointer;padding:4px 2px;text-align:center}
+.chip b{font:600 15px/1.3 var(--font-family)}
+.chip.on{background:var(--color-brand);border-color:var(--color-brand);color:var(--color-on-brand)}
+.chip.off{background:var(--color-bg);opacity:.5;cursor:not-allowed}
+.skel{background:var(--color-border);border-radius:var(--radius-sm);height:56px;border-radius:var(--radius-sm)}
+.dim{position:absolute;inset:0;background:rgba(26,31,28,.4);display:flex;align-items:flex-end}
+.sheet{width:100%;background:var(--color-surface);border-radius:var(--radius-lg) var(--radius-lg) 0 0;box-shadow:var(--shadow-sheet);padding:16px}
+.sheet h3{font:600 17px/1.4 var(--font-family);margin-bottom:8px}
+.sheet .btn{margin-top:8px}
+.empty{text-align:center;padding:32px 16px}
+.empty h3{font:600 17px/1.4 var(--font-family);margin-bottom:8px}
+</style>
+</head>
+<body>
+
+<div class="meta">
+  <b>SC-006 · 픽업 날짜·시간대 선택</b>
+  사용자: 고객 (PENDING 주문서 보유 시에만 진입)
+  <div class="fr">FR-005, FR-020, FR-022, FR-023</div>
+  <div class="fr"><a href="index.html">화면 인덱스로</a></div>
+</div>
+
+<div class="states">
+  <button class="stbtn" data-s="default" onclick="setState('default')">기본(선택 전)</button>
+  <button class="stbtn" data-s="picked" onclick="setState('picked')">시간대 선택됨</button>
+  <button class="stbtn" data-s="loading" onclick="setState('loading')">로딩</button>
+  <button class="stbtn" data-s="today" onclick="setState('today')">빈 상태(오늘 불가)</button>
+  <button class="stbtn" data-s="empty" onclick="setState('empty')">빈 상태(양일 불가)</button>
+  <button class="stbtn" data-s="full" onclick="setState('full')">오류(정원 소진)</button>
+  <button class="stbtn" data-s="expired" onclick="setState('expired')">선점 만료</button>
+  <button class="stbtn" data-s="error" onclick="setState('error')">오류(통신)</button>
+</div>
+
+<div class="frame" id="frame">
+  <div class="appbar">
+    <a class="back" href="sc-005-order-sheet.html">←</a>
+    <span class="ttl">픽업 시간 선택</span>
+  </div>
+
+  <div class="timer">선점 시간 08:42 남음</div>
+
+  <div class="band band-warn st st-today">오늘은 선택할 수 있는 시간대가 없어 내일로 넘겼어요</div>
+
+  <div class="scroll">
+    <div class="seg">
+      <button class="st st-default st-picked st-loading st-full st-error st-empty on">오늘 8/28</button>
+      <button class="st st-today">오늘 8/28</button>
+      <button class="st st-default st-picked st-loading st-full st-error st-empty">내일 8/29</button>
+      <button class="st st-today on">내일 8/29</button>
+    </div>
+
+    <p class="cap mb2 st st-default st-picked st-full st-error">10:00~22:00 · 30분 단위 24개 시간대 · 시간대당 정원 20건</p>
+
+    <!-- 시간대 칩 그리드 -->
+    <div class="chips st st-default st-picked st-full st-error st-today">
+      <button class="chip off"><b>17:00</b>마감</button>
+      <button class="chip off"><b>17:30</b>마감</button>
+      <button class="chip off"><b>18:00</b>마감</button>
+      <button class="chip off"><b>18:30</b>마감</button>
+      <button class="chip"><b>19:00</b>8/20</button>
+      <button class="chip off"><b>19:30</b>20/20 정원 마감</button>
+      <button class="chip st st-default st-full st-error st-today" onclick="setState('picked')"><b>20:00</b>4/20</button>
+      <button class="chip on st st-picked"><b>20:00</b>4/20</button>
+      <button class="chip off st st-full"><b>20:00</b>20/20 정원 마감</button>
+      <button class="chip"><b>20:30</b>0/20</button>
+      <button class="chip off"><b>21:00</b>상품 마감 이후</button>
+      <button class="chip off"><b>21:30</b>운영 중단</button>
+    </div>
+    <p class="cap mt2 st st-default st-picked st-full st-error st-today">선택할 수 없는 시간대도 목록에 그대로 남겨 둬요. 왜 못 고르는지 보이게 하기 위해서예요.</p>
+
+    <div class="card mt2 st st-picked">
+      <div class="sec">선택: 오늘 20:00~20:30</div>
+      <p class="cap">19:00까지 취소할 수 있어요</p>
+      <p class="cap">21:00까지 오지 않으면 노쇼로 처리돼요</p>
+    </div>
+
+    <!-- 로딩: 칩 스켈레톤 12개 -->
+    <div class="chips st st-loading">
+      <div class="skel"></div><div class="skel"></div><div class="skel"></div>
+      <div class="skel"></div><div class="skel"></div><div class="skel"></div>
+      <div class="skel"></div><div class="skel"></div><div class="skel"></div>
+      <div class="skel"></div><div class="skel"></div><div class="skel"></div>
+    </div>
+    <p class="cap mt2 st st-loading" style="text-align:center">예약 가능한 시간대를 확인하는 중이에요</p>
+
+    <!-- 빈 상태(양일 전부 불가) -->
+    <div class="st st-empty">
+      <div class="empty">
+        <h3>지금은 예약할 수 있는 픽업 시간대가 없어요</h3>
+        <p class="cap mb2">사유별로 이렇게 나뉘어요</p>
+      </div>
+      <div class="card">
+        <p class="cap">· 정원 20건이 모두 찬 시간대 — 8개</p>
+        <p class="cap">· 주문한 상품의 마감 시각(21:00) 이후 시간대 — 12개</p>
+        <p class="cap">· 예약 마감(시작 30분 전 경과) 시간대 — 4개</p>
+      </div>
+      <a class="btn" href="sc-004-cart.html">주문서 포기하고 장바구니로</a>
+    </div>
+  </div>
+
+  <div class="actionbar st st-default st-loading st-today st-error">
+    <p class="cap mb2">픽업 시간대를 골라야 결제할 수 있어요</p>
+    <div class="row">
+      <div class="grow"><div class="cap">결제 확정 금액</div><div class="amt">18,900원</div></div>
+      <button class="btn" style="width:150px" disabled>결제하기</button>
+    </div>
+  </div>
+
+  <div class="actionbar st st-picked st-full st-expired st-empty">
+    <div class="row">
+      <div class="grow"><div class="cap">오늘 20:00~20:30</div><div class="amt">18,900원</div></div>
+      <a class="btn btn-primary" style="width:150px" href="sc-007-payment.html">결제하기</a>
+    </div>
+  </div>
+
+  <!-- 정원 소진 시트 -->
+  <div class="dim st st-full">
+    <div class="sheet">
+      <h3>방금 정원이 찼어요</h3>
+      <p class="cap">선택한 오늘 20:00~20:30 시간대의 정원 20건이 모두 찼어요. 다른 시간대를 골라주세요.</p>
+      <button class="btn btn-primary" onclick="setState('default')">다른 시간대 고르기</button>
+    </div>
+  </div>
+
+  <!-- 선점 만료 시트 -->
+  <div class="dim st st-expired">
+    <div class="sheet">
+      <h3>선점 시간이 끝났어요</h3>
+      <p class="cap">선점한 수량은 다른 고객이 살 수 있게 돌아갔어요. 담아 둔 상품으로 다시 주문할 수 있어요.</p>
+      <a class="btn btn-primary" href="sc-004-cart.html">장바구니에서 다시 주문하기</a>
+    </div>
+  </div>
+
+  <!-- 통신 오류 시트 -->
+  <div class="dim st st-error">
+    <div class="sheet">
+      <h3>시간대를 불러오지 못했어요</h3>
+      <p class="cap">잠시 뒤에 다시 시도해주세요.</p>
+      <button class="btn btn-primary" onclick="setState('default')">다시 시도</button>
+    </div>
+  </div>
+</div>
+
+<script>
+function setState(s){
+  var f=document.getElementById('frame'); f.setAttribute('data-state',s);
+  var els=document.querySelectorAll('.st');
+  for(var i=0;i<els.length;i++){ els[i].hidden = !els[i].classList.contains('st-'+s); }
+  var bs=document.querySelectorAll('.stbtn');
+  for(var j=0;j<bs.length;j++){ bs[j].className = 'stbtn' + (bs[j].getAttribute('data-s')===s?' on':''); }
+}
+setState('default');
+</script>
+</body>
+</html>

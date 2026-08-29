@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SC-011 주문 취소 확인 — savePick 와이어프레임</title>
+<style>
+:root{--color-brand:#17795E;--color-brand-weak:#E7F4EF;--color-fresh:#2FA37A;--color-discount:#0B5FA5;--color-warning:#9A5B00;--color-warning-weak:#FDF3E3;--color-danger:#C0392B;--color-danger-weak:#FBECEA;--color-text:#1A1F1C;--color-text-weak:#6B7671;--color-surface:#FFFFFF;--color-bg:#F4F7F5;--color-border:#DFE6E2;--color-on-brand:#FFFFFF;--font-family:Pretendard,-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Noto Sans KR","Malgun Gothic",sans-serif;--radius-sm:6px;--radius-md:10px;--radius-lg:14px;--shadow-card:0 1px 2px rgba(26,31,28,.06);--shadow-sheet:0 -4px 16px rgba(26,31,28,.12)}
+*{box-sizing:border-box;margin:0;padding:0}
+[hidden]{display:none!important}
+body{font:400 15px/1.6 var(--font-family);color:var(--color-text);background:var(--color-border);padding:12px 0 40px}
+a{color:inherit;text-decoration:none}
+.meta{width:360px;margin:0 auto 12px;background:var(--color-text);color:var(--color-on-brand);border-radius:var(--radius-md);padding:10px 12px;font:400 13px/1.5 var(--font-family)}
+.meta b{font:600 17px/1.4 var(--font-family);display:block}
+.meta .fr{color:var(--color-border);word-break:keep-all}
+.meta a{color:var(--color-on-brand);text-decoration:underline}
+.states{width:360px;margin:0 auto 8px;display:flex;flex-wrap:wrap;gap:4px}
+.stbtn{min-height:32px;padding:4px 10px;border:1px solid var(--color-border);background:var(--color-surface);color:var(--color-text);border-radius:var(--radius-sm);font:400 13px/1.5 var(--font-family);cursor:pointer}
+.stbtn.on{background:var(--color-brand);border-color:var(--color-brand);color:var(--color-on-brand)}
+.frame{width:360px;height:640px;margin:0 auto;background:var(--color-bg);display:flex;flex-direction:column;overflow:hidden;position:relative;border:1px solid var(--color-border);border-radius:var(--radius-lg)}
+.appbar{flex:0 0 56px;display:flex;align-items:center;gap:8px;padding:0 16px;background:var(--color-surface);border-bottom:1px solid var(--color-border)}
+.appbar .ttl{font:600 17px/1.4 var(--font-family)}
+.appbar .back{width:44px;height:44px;margin-left:-12px;display:flex;align-items:center;justify-content:center;font-size:18px}
+.scroll{flex:1 1 auto;overflow-y:auto;overflow-x:hidden;padding:16px}
+.card{display:block;background:var(--color-surface);border:1px solid var(--color-border);border-radius:var(--radius-lg);box-shadow:var(--shadow-card);padding:16px;margin-bottom:12px}
+.cap{font:400 13px/1.5 var(--font-family);color:var(--color-text-weak)}
+.warn{color:var(--color-warning)}.danger{color:var(--color-danger)}
+.price{font:700 20px/1.3 var(--font-family);font-variant-numeric:tabular-nums;color:var(--color-discount)}
+.dl{display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--color-border);font:400 15px/1.6 var(--font-family)}
+.dl:last-child{border-bottom:0}
+.dl dt{color:var(--color-text-weak);font:400 13px/1.5 var(--font-family)}
+.num{font-variant-numeric:tabular-nums}
+.mt1{margin-top:4px}.mt2{margin-top:8px}.mb2{margin-bottom:8px}
+.sec{font:600 17px/1.4 var(--font-family);margin-bottom:8px}
+.btn{display:flex;align-items:center;justify-content:center;width:100%;min-height:48px;border-radius:var(--radius-md);border:1px solid var(--color-border);background:var(--color-surface);color:var(--color-text);font:400 15px/1.6 var(--font-family);cursor:pointer;text-align:center}
+.btn-primary{min-height:52px;background:var(--color-brand);border-color:var(--color-brand);color:var(--color-on-brand);font-weight:600}
+.btn-danger{border-color:var(--color-danger);color:var(--color-danger)}
+.btn:disabled{background:var(--color-border);border-color:var(--color-border);color:var(--color-text-weak);cursor:not-allowed}
+.dim{position:absolute;inset:0;background:rgba(26,31,28,.4);display:flex;align-items:flex-end}
+.sheet{width:100%;background:var(--color-surface);border-radius:var(--radius-lg) var(--radius-lg) 0 0;box-shadow:var(--shadow-sheet);padding:16px}
+.sheet h3{font:600 17px/1.4 var(--font-family);margin-bottom:8px}
+.sheet .btn{margin-top:8px}
+</style>
+</head>
+<body>
+
+<div class="meta">
+  <b>SC-011 · 주문 취소 확인</b>
+  사용자: 고객 (CONFIRMED·READY · 취소 마감 전 본인 주문만)
+  <div class="fr">FR-029, FR-030</div>
+  <div class="fr"><a href="index.html">화면 인덱스로</a></div>
+</div>
+
+<div class="states">
+  <button class="stbtn" data-s="default" onclick="setState('default')">기본(마감 전)</button>
+  <button class="stbtn" data-s="closed" onclick="setState('closed')">기본(상품 마감 후)</button>
+  <button class="stbtn" data-s="loading" onclick="setState('loading')">로딩</button>
+  <button class="stbtn" data-s="late" onclick="setState('late')">오류(마감 경과)</button>
+  <button class="stbtn" data-s="conflict" onclick="setState('conflict')">오류(상태 불일치)</button>
+  <button class="stbtn" data-s="error" onclick="setState('error')">오류(통신)</button>
+</div>
+
+<div class="frame" id="frame">
+  <div class="appbar">
+    <a class="back" href="sc-010-order-detail.html">←</a>
+    <span class="ttl">주문 취소</span>
+  </div>
+
+  <div class="scroll">
+    <div class="card">
+      <div class="sec">취소할 주문</div>
+      <div class="dl"><dt>픽업 번호</dt><dd class="num">042</dd></div>
+      <div class="dl"><dt>픽업 시간대</dt><dd>오늘 20:00~20:30</dd></div>
+      <div class="dl"><dt>결제 금액</dt><dd class="price">18,900원</dd></div>
+      <div class="dl"><dt>주문 번호</dt><dd class="num">ORD-20260828-000117</dd></div>
+    </div>
+
+    <div class="card">
+      <p class="warn">부분 취소는 할 수 없어요. 주문 전체가 취소돼요</p>
+      <p class="cap mt2 st st-default st-loading st-late st-conflict st-error">취소한 수량은 바로 다시 판매돼요</p>
+      <p class="cap mt2 st st-closed">마감 시각이 지나 재고로 되돌리지 않아요</p>
+      <p class="cap mt1">19:00까지 취소할 수 있어요</p>
+    </div>
+  </div>
+
+  <div class="dim st st-default st-closed">
+    <div class="sheet">
+      <h3>주문을 전체 취소할까요?</h3>
+      <p class="cap">취소하면 되돌릴 수 없어요. 같은 상품을 다시 주문하려면 장바구니에서 새로 주문해야 해요.</p>
+      <a class="btn" href="sc-010-order-detail.html">취소하지 않기</a>
+      <button class="btn btn-danger" onclick="setState('loading')">전체 취소하기</button>
+    </div>
+  </div>
+
+  <div class="dim st st-loading">
+    <div class="sheet">
+      <h3>취소 처리 중이에요</h3>
+      <p class="cap">잠시만 기다려주세요.</p>
+      <button class="btn" disabled>취소하지 않기</button>
+      <button class="btn" disabled>전체 취소하기</button>
+    </div>
+  </div>
+
+  <div class="dim st st-late">
+    <div class="sheet">
+      <h3>방금 취소 가능 시각이 지났어요 (19:00)</h3>
+      <p class="cap">취소를 실행하지 않았어요. 매장으로 문의해주세요. 02-000-0000</p>
+      <a class="btn btn-primary" href="sc-010-order-detail.html">닫기</a>
+    </div>
+  </div>
+
+  <div class="dim st st-conflict">
+    <div class="sheet">
+      <h3>이미 처리된 주문이에요</h3>
+      <p class="cap">현재 상태는 픽업 완료예요.</p>
+      <a class="btn btn-primary" href="sc-010-order-detail.html">주문 상세로</a>
+    </div>
+  </div>
+
+  <div class="dim st st-error">
+    <div class="sheet">
+      <h3>취소하지 못했어요</h3>
+      <p class="cap">주문은 그대로 유지되고 있어요. 잠시 뒤에 다시 시도해주세요.</p>
+      <button class="btn btn-primary" onclick="setState('default')">다시 시도</button>
+    </div>
+  </div>
+</div>
+
+<script>
+function setState(s){
+  var f=document.getElementById('frame'); f.setAttribute('data-state',s);
+  var els=document.querySelectorAll('.st');
+  for(var i=0;i<els.length;i++){ els[i].hidden = !els[i].classList.contains('st-'+s); }
+  var bs=document.querySelectorAll('.stbtn');
+  for(var j=0;j<bs.length;j++){ bs[j].className = 'stbtn' + (bs[j].getAttribute('data-s')===s?' on':''); }
+}
+setState('default');
+</script>
+</body>
+</html>

@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SC-014 마이페이지 — savePick 와이어프레임</title>
+<style>
+:root{--color-brand:#17795E;--color-brand-weak:#E7F4EF;--color-fresh:#2FA37A;--color-discount:#0B5FA5;--color-warning:#9A5B00;--color-warning-weak:#FDF3E3;--color-danger:#C0392B;--color-danger-weak:#FBECEA;--color-text:#1A1F1C;--color-text-weak:#6B7671;--color-surface:#FFFFFF;--color-bg:#F4F7F5;--color-border:#DFE6E2;--color-on-brand:#FFFFFF;--font-family:Pretendard,-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Noto Sans KR","Malgun Gothic",sans-serif;--radius-sm:6px;--radius-md:10px;--radius-lg:14px;--shadow-card:0 1px 2px rgba(26,31,28,.06);--shadow-sheet:0 -4px 16px rgba(26,31,28,.12)}
+*{box-sizing:border-box;margin:0;padding:0}
+[hidden]{display:none!important}
+body{font:400 15px/1.6 var(--font-family);color:var(--color-text);background:var(--color-border);padding:12px 0 40px}
+a{color:inherit;text-decoration:none}
+.meta{width:360px;margin:0 auto 12px;background:var(--color-text);color:var(--color-on-brand);border-radius:var(--radius-md);padding:10px 12px;font:400 13px/1.5 var(--font-family)}
+.meta b{font:600 17px/1.4 var(--font-family);display:block}
+.meta .fr{color:var(--color-border);word-break:keep-all}
+.meta a{color:var(--color-on-brand);text-decoration:underline}
+.states{width:360px;margin:0 auto 8px;display:flex;flex-wrap:wrap;gap:4px}
+.stbtn{min-height:32px;padding:4px 10px;border:1px solid var(--color-border);background:var(--color-surface);color:var(--color-text);border-radius:var(--radius-sm);font:400 13px/1.5 var(--font-family);cursor:pointer}
+.stbtn.on{background:var(--color-brand);border-color:var(--color-brand);color:var(--color-on-brand)}
+.frame{width:360px;height:640px;margin:0 auto;background:var(--color-bg);display:flex;flex-direction:column;overflow:hidden;position:relative;border:1px solid var(--color-border);border-radius:var(--radius-lg)}
+.appbar{flex:0 0 56px;display:flex;align-items:center;gap:8px;padding:0 16px;background:var(--color-surface);border-bottom:1px solid var(--color-border)}
+.appbar .ttl{font:600 17px/1.4 var(--font-family)}
+.scroll{flex:1 1 auto;overflow-y:auto;overflow-x:hidden;padding:16px}
+.card{display:block;background:var(--color-surface);border:1px solid var(--color-border);border-radius:var(--radius-lg);box-shadow:var(--shadow-card);padding:16px;margin-bottom:12px}
+.card.warncard{background:var(--color-warning-weak);border-color:var(--color-warning-weak)}
+.cap{font:400 13px/1.5 var(--font-family);color:var(--color-text-weak)}
+.warn{color:var(--color-warning)}.danger{color:var(--color-danger)}
+.sec{font:600 17px/1.4 var(--font-family);margin-bottom:8px}
+.between{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.mt1{margin-top:4px}.mt2{margin-top:8px}.mb2{margin-bottom:8px}
+.dl{display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--color-border);font:400 15px/1.6 var(--font-family)}
+.dl:last-child{border-bottom:0}
+.dl dt{color:var(--color-text-weak);font:400 13px/1.5 var(--font-family)}
+.field{margin-bottom:16px}
+.field label{display:block;font:400 13px/1.5 var(--font-family);color:var(--color-text-weak);margin-bottom:4px}
+.field input{width:100%;height:52px;border:1px solid var(--color-border);border-radius:var(--radius-md);padding:0 12px;font:400 15px/1.6 var(--font-family);background:var(--color-surface);color:var(--color-text)}
+.field input:disabled{background:var(--color-bg);color:var(--color-text-weak)}
+.field.err input{border-color:var(--color-danger)}
+.field .msg{font:400 13px/1.5 var(--font-family);color:var(--color-danger);margin-top:4px}
+.btn{display:flex;align-items:center;justify-content:center;width:100%;min-height:48px;border-radius:var(--radius-md);border:1px solid var(--color-border);background:var(--color-surface);color:var(--color-text);font:400 15px/1.6 var(--font-family);cursor:pointer;text-align:center}
+.btn-primary{min-height:52px;background:var(--color-brand);border-color:var(--color-brand);color:var(--color-on-brand);font-weight:600}
+.btn:disabled{background:var(--color-border);border-color:var(--color-border);color:var(--color-text-weak);cursor:not-allowed}
+.skel{background:var(--color-border);border-radius:var(--radius-sm);height:14px;margin:6px 0}
+.dim{position:absolute;inset:0;background:rgba(26,31,28,.4);display:flex;align-items:flex-end}
+.sheet{width:100%;background:var(--color-surface);border-radius:var(--radius-lg) var(--radius-lg) 0 0;box-shadow:var(--shadow-sheet);padding:16px}
+.sheet h3{font:600 17px/1.4 var(--font-family);margin-bottom:8px}
+.sheet .btn{margin-top:8px}
+.tabbar{flex:0 0 56px;display:flex;background:var(--color-surface);border-top:1px solid var(--color-border)}
+.tabbar a{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;font:400 13px/1.2 var(--font-family);color:var(--color-text-weak)}
+.tabbar a.on{color:var(--color-brand);font-weight:600}
+</style>
+</head>
+<body>
+
+<div class="meta">
+  <b>SC-014 · 마이페이지</b>
+  사용자: 고객 (로그인 필수 · 미로그인 진입 시 SC-012)
+  <div class="fr">FR-002, FR-003, FR-004, FR-031, FR-032</div>
+  <div class="fr"><a href="index.html">화면 인덱스로</a></div>
+</div>
+
+<div class="states">
+  <button class="stbtn" data-s="default" onclick="setState('default')">기본</button>
+  <button class="stbtn" data-s="edit" onclick="setState('edit')">수정 모드</button>
+  <button class="stbtn" data-s="loading" onclick="setState('loading')">로딩</button>
+  <button class="stbtn" data-s="restricted" onclick="setState('restricted')">주문 제한</button>
+  <button class="stbtn" data-s="format" onclick="setState('format')">오류(형식)</button>
+  <button class="stbtn" data-s="error" onclick="setState('error')">오류(통신)</button>
+</div>
+
+<div class="frame" id="frame">
+  <div class="appbar"><span class="ttl">마이페이지</span></div>
+
+  <div class="scroll">
+    <div class="card warncard st st-restricted">
+      <p class="warn">노쇼 3회 누적 · 2026-09-04 19:00까지 새 주문을 만들 수 없어요</p>
+      <p class="cap mt1">확정된 주문은 그대로 유지돼요</p>
+    </div>
+
+    <!-- 기본 -->
+    <div class="card st st-default st-restricted st-error">
+      <div class="between mb2"><span class="sec" style="margin:0">회원 정보</span><button class="btn" style="width:auto;padding:0 12px;min-height:44px" onclick="setState('edit')">수정</button></div>
+      <div class="dl"><dt>이름</dt><dd>김지현</dd></div>
+      <div class="dl"><dt>이메일</dt><dd>jihyun@example.com</dd></div>
+      <div class="dl"><dt>휴대폰 번호</dt><dd>010-0000-0000</dd></div>
+    </div>
+
+    <!-- 수정 모드 -->
+    <div class="card st st-edit st-format">
+      <div class="sec">회원 정보 수정</div>
+      <div class="field">
+        <label for="n">이름</label>
+        <input id="n" type="text" value="김지현">
+      </div>
+      <div class="field">
+        <label for="e">이메일</label>
+        <input id="e" type="email" value="jihyun@example.com" disabled>
+        <p class="cap mt1">이메일은 변경할 수 없어요</p>
+      </div>
+      <div class="field st st-edit">
+        <label for="t">휴대폰 번호</label>
+        <input id="t" type="tel" value="010-0000-0000">
+      </div>
+      <div class="field err st st-format">
+        <label for="t2">휴대폰 번호</label>
+        <input id="t2" type="tel" value="010-00">
+        <p class="msg">휴대폰 번호 형식을 확인해주세요</p>
+      </div>
+      <p class="cap mb2">수정한 내용은 앞으로 만드는 주문부터 반영돼요. 이미 확정된 주문의 픽업 연락처는 바뀌지 않아요.</p>
+      <button class="btn btn-primary st st-edit" onclick="setState('default')">저장</button>
+      <button class="btn st st-format" disabled>저장</button>
+      <button class="btn mt2" onclick="setState('default')" style="margin-top:8px">취소</button>
+    </div>
+
+    <!-- 로딩 -->
+    <div class="card st st-loading">
+      <div class="skel" style="width:40%"></div>
+      <div class="skel" style="width:70%"></div>
+      <div class="skel" style="width:55%"></div>
+      <p class="cap mt2" style="text-align:center">회원 정보를 불러오는 중이에요</p>
+    </div>
+
+    <div class="card st st-default st-edit st-restricted st-format st-error">
+      <div class="sec">픽업 기록</div>
+      <div class="dl"><dt>최근 30일 노쇼</dt><dd class="st st-default st-edit st-format st-error">1회</dd><dd class="warn st st-restricted">3회</dd></div>
+      <div class="dl st st-restricted"><dt>주문 제한 해제</dt><dd>2026-09-04 19:00</dd></div>
+      <p class="cap mt2">노쇼가 30일 안에 3회가 되면 7일 동안 새 주문을 만들 수 없어요</p>
+    </div>
+
+    <div class="card st st-default st-edit st-restricted st-format st-error">
+      <a class="btn mb2" href="sc-009-order-history.html">주문 내역 보기</a>
+      <a class="btn mb2" href="sc-015-store-guide.html">매장·픽업 안내</a>
+      <a class="btn" href="sc-012-login.html">로그아웃</a>
+    </div>
+  </div>
+
+  <div class="dim st st-error">
+    <div class="sheet">
+      <h3>저장하지 못했어요</h3>
+      <p class="cap">입력한 내용은 그대로 남아 있어요. 잠시 뒤에 다시 시도해주세요.</p>
+      <button class="btn btn-primary" onclick="setState('edit')">다시 시도</button>
+    </div>
+  </div>
+
+  <div class="tabbar">
+    <a href="sc-001-home-product-list.html">홈</a>
+    <a href="sc-004-cart.html">장바구니</a>
+    <a href="sc-009-order-history.html">주문 내역</a>
+    <a class="on" href="sc-014-mypage.html">마이페이지</a>
+  </div>
+</div>
+
+<script>
+function setState(s){
+  var f=document.getElementById('frame'); f.setAttribute('data-state',s);
+  var els=document.querySelectorAll('.st');
+  for(var i=0;i<els.length;i++){ els[i].hidden = !els[i].classList.contains('st-'+s); }
+  var bs=document.querySelectorAll('.stbtn');
+  for(var j=0;j<bs.length;j++){ bs[j].className = 'stbtn' + (bs[j].getAttribute('data-s')===s?' on':''); }
+}
+setState('default');
+</script>
+</body>
+</html>
