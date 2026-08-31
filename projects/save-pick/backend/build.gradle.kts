@@ -24,7 +24,7 @@ repositories {
     mavenCentral()
 }
 
-extra["testcontainersVersion"] = "1.20.3"
+extra["testcontainersVersion"] = "1.21.4"
 
 dependencies {
     // web / api
@@ -56,6 +56,10 @@ dependencies {
     testImplementation("org.springframework.boot:spring-boot-testcontainers")
     testImplementation("org.testcontainers:junit-jupiter")
     testImplementation("org.testcontainers:postgresql")
+    // TestRestTemplate이 PATCH를 보내려면 JDK 기본 HttpURLConnection이 아닌 클라이언트가 필요하다
+    // (HttpURLConnection은 PATCH를 지원하지 않고, POST/PUT 스트리밍 바디 + 401 응답 조합에서
+    // HttpRetryException을 던진다). Spring Boot가 클래스패스에서 자동 감지해 사용한다.
+    testImplementation("org.apache.httpcomponents.client5:httpclient5")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
 
