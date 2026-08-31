@@ -1,5 +1,6 @@
 import { AuthProvider } from "@/lib/auth/customer-auth";
 import { BottomTabBar } from "./_components/BottomTabBar";
+import { ServerTimeSync } from "./_components/ServerTimeSync";
 
 /**
  * 고객 화면 공통 레이아웃. 하단 탭 바를 공유한다(docs/09 §1.2).
@@ -10,6 +11,7 @@ import { BottomTabBar } from "./_components/BottomTabBar";
 export default function CustomerLayout({ children }: LayoutProps<"/">) {
   return (
     <AuthProvider>
+      <ServerTimeSync />
       <div className="flex flex-1 flex-col">
         <main className="flex-1 overflow-y-auto">{children}</main>
         <BottomTabBar />

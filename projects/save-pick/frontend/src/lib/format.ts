@@ -20,3 +20,14 @@ export function formatKstDateTime(isoString: string): string {
 export function formatWon(amount: number): string {
   return `${amount.toLocaleString("ko-KR")}원`;
 }
+
+/**
+ * docs/09-ui-design-brief.md §2.5 선점 타이머 바 등에서 쓰는 `mm:ss` 표기(`09:58`).
+ * 음수는 0으로 취급한다 — 만료 판정은 호출부가 별도로 한다.
+ */
+export function formatMmSs(totalSeconds: number): string {
+  const clamped = Math.max(0, Math.floor(totalSeconds));
+  const minutes = Math.floor(clamped / 60);
+  const seconds = clamped % 60;
+  return `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
+}
