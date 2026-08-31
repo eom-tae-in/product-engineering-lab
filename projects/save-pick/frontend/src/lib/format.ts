@@ -12,3 +12,11 @@ export function formatKstDateTime(isoString: string): string {
   const match = isoString.match(/^(\d{4}-\d{2}-\d{2})T(\d{2}:\d{2})/);
   return match ? `${match[1]} ${match[2]}` : isoString;
 }
+
+/**
+ * docs/09-ui-design-brief.md §2.4 상품 카드 등에서 쓰는 금액 표기(`12,000원`).
+ * 모든 금액은 원 단위 정수다(11번 §0.4).
+ */
+export function formatWon(amount: number): string {
+  return `${amount.toLocaleString("ko-KR")}원`;
+}
