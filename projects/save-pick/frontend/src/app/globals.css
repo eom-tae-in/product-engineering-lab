@@ -1,26 +1,104 @@
 @import "tailwindcss";
 
+/* docs/08-brand-guide.md §8 토큰 요약 그대로. 값을 임의로 바꾸지 않는다. */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --color-brand: #17795e;
+  --color-brand-weak: #e7f4ef;
+  --color-fresh: #2fa37a;
+  --color-discount: #0b5fa5;
+  --color-warning: #9a5b00;
+  --color-warning-weak: #fdf3e3;
+  --color-danger: #c0392b;
+  --color-danger-weak: #fbecea;
+  --color-text: #1a1f1c;
+  --color-text-weak: #6b7671;
+  --color-surface: #ffffff;
+  --color-bg: #f4f7f5;
+  --color-border: #dfe6e2;
+  --color-on-brand: #ffffff;
+
+  --font-family: Pretendard, -apple-system, BlinkMacSystemFont,
+    "Apple SD Gothic Neo", "Noto Sans KR", "Malgun Gothic", sans-serif;
+
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-6: 24px;
+  --space-8: 32px;
+
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --shadow-card: 0 1px 2px rgba(26, 31, 28, 0.06);
+  --shadow-sheet: 0 -4px 16px rgba(26, 31, 28, 0.12);
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
+/* docs/08 §3.4 다크 모드: 토큰만 재정의한다 */
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --color-brand: #3da582;
+    --color-brand-weak: #153029;
+    --color-fresh: #57c79e;
+    --color-discount: #69b4f0;
+    --color-warning: #e5a44d;
+    --color-danger: #f0776a;
+    --color-text: #eaf0ec;
+    --color-text-weak: #9aa8a2;
+    --color-surface: #182120;
+    --color-bg: #101614;
+    --color-border: #2c3835;
   }
 }
 
+@theme inline {
+  --color-brand: var(--color-brand);
+  --color-brand-weak: var(--color-brand-weak);
+  --color-fresh: var(--color-fresh);
+  --color-discount: var(--color-discount);
+  --color-warning: var(--color-warning);
+  --color-warning-weak: var(--color-warning-weak);
+  --color-danger: var(--color-danger);
+  --color-danger-weak: var(--color-danger-weak);
+  --color-text: var(--color-text);
+  --color-text-weak: var(--color-text-weak);
+  --color-surface: var(--color-surface);
+  --color-bg: var(--color-bg);
+  --color-border: var(--color-border);
+  --color-on-brand: var(--color-on-brand);
+  --font-sans: var(--font-family);
+
+  /* docs/08 §4.3 여백 스케일(4/8/12/16/24/32px)은 Tailwind v4 기본 spacing 배율
+     (--spacing: 0.25rem × n)과 이미 정확히 일치해 별도 재정의가 필요 없다.
+     p-4, gap-3, space-y-6 등을 그대로 쓰면 된다. */
+
+  --radius-sm: var(--radius-sm);
+  --radius-md: var(--radius-md);
+  --radius-lg: var(--radius-lg);
+}
+
+/* docs/08 §4.2 타이포 토큰. Tailwind 유틸(text-*, font-*)로 조합할 수 없는 굵기·자간·행간
+   조합이라 클래스 형태로 둔다. 화면 구현에서 className="font-display"처럼 쓴다. */
+.font-display {
+  font: 700 22px/1.3 var(--font-family);
+}
+.font-heading {
+  font: 600 17px/1.4 var(--font-family);
+}
+.font-body {
+  font: 400 15px/1.6 var(--font-family);
+}
+.font-price {
+  font: 700 20px/1.3 var(--font-family);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
+}
+.font-caption {
+  font: 400 13px/1.5 var(--font-family);
+}
+
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--color-bg);
+  color: var(--color-text);
+  font-family: var(--font-family);
 }

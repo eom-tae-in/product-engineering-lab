@@ -14,5 +14,8 @@ export default defineConfig({
     setupFiles: ["./src/test/setup.ts"],
     globals: false,
     css: true,
+    env: {
+      NEXT_PUBLIC_API_BASE_URL: "http://test.local",
+    },
   },
 });
