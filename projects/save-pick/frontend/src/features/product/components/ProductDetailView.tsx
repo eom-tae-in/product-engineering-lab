@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Badge } from "@/components/ui/Badge";
 import { BottomSheet } from "@/components/ui/BottomSheet";
 import { Button } from "@/components/ui/Button";
+import { QuantityStepper } from "@/components/ui/QuantityStepper";
 import { addToCart } from "@/features/cart/api";
 import { ApiError } from "@/lib/api-client";
 import { formatKstTime, formatWon } from "@/lib/format";
@@ -31,14 +32,6 @@ export function ProductDetailView({ product }: ProductDetailViewProps) {
 
   const atMax = quantity >= product.maxOrderQuantity;
   const canOperate = product.purchasable;
-
-  function decrease() {
-    setQuantity((prev) => Math.max(1, prev - 1));
-  }
-
-  function increase() {
-    setQuantity((prev) => Math.min(product.maxOrderQuantity, prev + 1));
-  }
 
   async function handleAddToCart() {
     setAdding(true);
@@ -105,27 +98,12 @@ export function ProductDetailView({ product }: ProductDetailViewProps) {
         ) : null}
 
         <div className="flex items-center gap-3">
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              aria-label="수량 줄이기"
-              onClick={decrease}
-              disabled={!canOperate || quantity <= 1}
-              className="h-11 w-11 rounded-md border border-border text-text disabled:opacity-50"
-            >
-              −
-            </button>
-            <span className="font-body w-6 text-center tabular-nums">{quantity}</span>
-            <button
-              type="button"
-              aria-label="수량 늘리기"
-              onClick={increase}
-              disabled={!canOperate || atMax}
-              className="h-11 w-11 rounded-md border border-border text-text disabled:opacity-50"
-            >
-              +
-            </button>
-          </div>
+          <QuantityStepper
+            value={quantity}
+            max={product.maxOrderQuantity}
+            onChange={setQuantity}
+            disabled={!canOperate}
+          />
           <Button
             onClick={() => void handleAddToCart()}
             disabled={!canOperate || adding}
