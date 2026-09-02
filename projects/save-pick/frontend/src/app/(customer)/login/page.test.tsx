@@ -76,18 +76,18 @@ describe("SC-012 로그인", () => {
 
   it("로딩: 제출 중에는 버튼 라벨이 바뀌고 입력이 비활성화된다", async () => {
     mockGuestSession();
+    // 타이머(setTimeout)로 응답을 늦추면 부하가 걸린 병렬 실행에서 로딩 단언 전에 로그인이
+    // 끝나 입력이 사라질 수 있다. 단언이 끝난 뒤에 직접 응답을 풀어 경합을 없앤다
+    // (orders/new/payment/page.test.tsx와 같은 방식).
+    let resolveLogin!: (response: Response) => void;
     server.use(
-      http.post(`${BASE}/api/auth/login`, async () => {
-        await new Promise((resolve) => setTimeout(resolve, 30));
-        return HttpResponse.json({
-          memberId: 17,
-          name: "지현",
-          role: "CUSTOMER",
-          accessToken: "access-token",
-          accessTokenExpiresAt: "2026-08-31T01:00:00+09:00",
-          orderPermission: "ALLOWED",
-        });
-      })
+      http.post(
+        `${BASE}/api/auth/login`,
+        () =>
+          new Promise<Response>((resolve) => {
+            resolveLogin = resolve;
+          })
+      )
     );
     renderPage();
 
@@ -99,6 +99,16 @@ describe("SC-012 로그인", () => {
     expect(screen.getByLabelText("이메일")).toBeDisabled();
     expect(screen.getByLabelText("비밀번호")).toBeDisabled();
 
+    resolveLogin(
+      HttpResponse.json({
+        memberId: 17,
+        name: "지현",
+        role: "CUSTOMER",
+        accessToken: "access-token",
+        accessTokenExpiresAt: "2026-08-31T01:00:00+09:00",
+        orderPermission: "ALLOWED",
+      })
+    );
     await waitFor(() => expect(pushMock).toHaveBeenCalledWith("/"));
   });
 
