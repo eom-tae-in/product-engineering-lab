@@ -1334,6 +1334,8 @@ PENDING·EXPIRED는 `status`로 명시하지 않는 한 반환하지 않는다 (
   "orderNo": "ORD-20260828-000123",
   "status": "CONFIRMED",
   "pickupNumber": "017",
+  "pickupStartAt": "2026-08-28T19:30:00+09:00",
+  "pickupEndAt": "2026-08-28T20:00:00+09:00",
   "customer": { "name": "지현", "phone": "01098765432" },
   "items": [
     { "productId": 12, "name": "국내산 삼겹살 300g", "quantity": 2, "unitPrice": 6000, "lineAmount": 12000 }
@@ -1352,6 +1354,8 @@ PENDING·EXPIRED는 `status`로 명시하지 않는 한 반환하지 않는다 (
 ```
 
 고객 연락처는 픽업 응대 목적으로만 반환한다 (FR-050).
+
+`pickupStartAt`·`pickupEndAt`은 06번 SC-109·SC-110의 "픽업 날짜·시간대" 표시에 쓴다. 시각은 지정된 픽업 시간대에 있으므로 아직 시간대를 고르지 않은 주문에서는 `null`이다 (API-112의 같은 필드와 같은 규칙).
 
 **오류**
 | 코드 | HTTP | 조건 | 규칙 |

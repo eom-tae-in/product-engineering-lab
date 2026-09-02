@@ -176,6 +176,18 @@ class AdminOrderApiIntegrationTest {
         assertThat(response.getBody().paymentAttempts().get(0).status()).isEqualTo("SUCCEEDED");
         assertThat(response.getBody().statusHistory()).hasSizeGreaterThanOrEqualTo(2);
         assertThat(response.getBody().availableActions()).containsExactlyInAnyOrder("READY", "COMPLETE", "CANCEL");
+
+        // 06번 SC-110(주문 상세, 관리자)이 "픽업 날짜·시간대"를 표시하려면 상세 응답에도
+        // 픽업 시간대가 있어야 한다. 목록(API-112)과 같은 시간대를 가리키는지 함께 확인한다.
+        ResponseEntity<AdminOrderListResponse> list = restTemplate.exchange(
+                "/api/admin/orders", HttpMethod.GET, new HttpEntity<>(bearer(adminToken)), AdminOrderListResponse.class);
+        AdminOrderListItemResponse listItem = list.getBody().items().stream()
+                .filter(item -> item.orderId().equals(orderId))
+                .findFirst()
+                .orElseThrow(() -> new IllegalStateException("방금 확정한 주문이 목록에 없다 — 테스트 전제가 깨졌다"));
+        assertThat(response.getBody().pickupStartAt()).isNotNull().isEqualTo(listItem.pickupStartAt());
+        assertThat(response.getBody().pickupEndAt()).isNotNull().isEqualTo(listItem.pickupEndAt());
+        assertThat(response.getBody().pickupStartAt()).isBefore(response.getBody().pickupEndAt());
     }
 
     @Test
@@ -195,6 +207,10 @@ class AdminOrderApiIntegrationTest {
                 new HttpEntity<>(bearer(adminToken)), AdminOrderDetailResponse.class);
         assertThat(byNumber.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(byNumber.getBody().orderId()).isEqualTo(orderId);
+        // 06번 SC-109(픽업 번호 조회)가 "픽업 시간대"를 표시한다. API-113은 API-114와 같은
+        // 상세 객체를 돌려주므로 이 경로로도 시간대가 채워져야 한다.
+        assertThat(byNumber.getBody().pickupStartAt()).isNotNull().isEqualTo(detail.getBody().pickupStartAt());
+        assertThat(byNumber.getBody().pickupEndAt()).isNotNull().isEqualTo(detail.getBody().pickupEndAt());
 
         ResponseEntity<ErrorResponse> notFound = restTemplate.exchange(
                 "/api/admin/orders/by-pickup-number?pickupNumber=999", HttpMethod.GET,

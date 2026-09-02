@@ -79,13 +79,9 @@ export type AdminOrderAction = "READY" | "COMPLETE" | "CANCEL";
  * docs/11-api-spec.md API-114 응답. API-113(픽업 번호 조회)도 "API-114와 동일한 주문
  * 상세 객체"라고 명시하므로 같은 타입을 쓴다.
  *
- * 판단: 11번 API-114 응답 예시 JSON에는 `pickupStartAt`·`pickupEndAt`이 없지만,
- * docs/06 SC-110 "표시 정보"가 "픽업 날짜·시간대"를 요구하고 같은 주문 엔터티를 다루는
- * API-112(목록) 응답에는 이 필드가 이미 있다. `features/order/types.ts`의
- * `OrderDetailResponse` 주석에 남아 있는 같은 종류의 판단(문서 예시가 비어 있어도 다른
- * 화면 요구사항·형제 API로 필드 존재를 추정)을 그대로 따라 두 필드를 응답에 포함된다고
- * 가정했다 — 실제 API가 이 필드를 내려주지 않으면 이 화면은 픽업 시간대를 표시하지
- * 못한다(백엔드 확인 필요, 최종 보고에도 남긴다).
+ * `pickupStartAt`·`pickupEndAt`은 06번 SC-109·SC-110의 "픽업 날짜·시간대" 표시에 쓴다.
+ * 시각은 주문이 아니라 지정된 픽업 시간대에 있어 아직 시간대를 고르지 않은 주문에서는
+ * null이다(11번 API-114 설명, API-112의 같은 필드와 같은 규칙).
  */
 export interface AdminOrderDetailResponse {
   orderId: number;
