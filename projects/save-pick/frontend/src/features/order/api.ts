@@ -2,8 +2,11 @@ import { clientRequest } from "@/lib/api-client";
 import type {
   AbandonOrderResponse,
   AssignPickupSlotResponse,
+  CancelOrderResponse,
   HoldStatusResponse,
   OrderDetailResponse,
+  OrderListResponse,
+  OrderListStatusFilter,
   PaymentResponse,
   PickupSlotsResponse,
 } from "./types";
@@ -73,5 +76,32 @@ export function submitPayment(
     authScope: "customer",
     body: { amount },
     idempotencyKey,
+  });
+}
+
+export interface FetchOrdersParams {
+  status?: OrderListStatusFilter;
+  /** true일 때만 EXPIRED·FAILED 주문을 포함한다(11번 API-023). SC-009 기본 목록은 생략한다. */
+  includeExpired?: boolean;
+}
+
+/** API-023 주문 내역 조회. SC-009가 상태 필터·목록에 쓴다. */
+export function fetchOrders(params: FetchOrdersParams = {}): Promise<OrderListResponse> {
+  const query = new URLSearchParams();
+  if (params.status) query.set("status", params.status);
+  if (params.includeExpired) query.set("includeExpired", "true");
+  const qs = query.toString();
+  return clientRequest<OrderListResponse>(`/api/orders${qs ? `?${qs}` : ""}`, {
+    method: "GET",
+    authScope: "customer",
+  });
+}
+
+/** API-025 주문 취소. 전체 취소만 지원하므로 `confirmed: true`를 항상 함께 보낸다(BR-024). */
+export function cancelOrder(orderId: number): Promise<CancelOrderResponse> {
+  return clientRequest<CancelOrderResponse>(`/api/orders/${orderId}/cancel`, {
+    method: "POST",
+    authScope: "customer",
+    body: { confirmed: true },
   });
 }

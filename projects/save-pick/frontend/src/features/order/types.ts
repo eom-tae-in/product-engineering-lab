@@ -29,7 +29,35 @@ export interface OrderDetailItem {
   lineAmount: number;
 }
 
-/** docs/11-api-spec.md API-024 응답. PENDING 주문도 본인 소유면 조회할 수 있다. */
+/** docs/11-api-spec.md API-024 응답의 `cancelUnavailableReason` 4종. */
+export type CancelUnavailableReason =
+  | "CANCEL_DEADLINE_PASSED"
+  | "ALREADY_COMPLETED"
+  | "ALREADY_CANCELED"
+  | "NO_SHOW";
+
+export type OrderActorType = "CUSTOMER" | "ADMIN" | "SYSTEM";
+
+/** docs/11-api-spec.md API-024 응답 `statusHistory[]`. SC-010 "상태 변경 이력"에 쓴다. */
+export interface OrderStatusHistoryEntry {
+  toStatus: OrderStatusValue;
+  actorType: OrderActorType;
+  occurredAt: string;
+}
+
+/** docs/11-api-spec.md API-024 응답 `store`. SC-008·SC-010이 매장 요약에 쓴다. */
+export interface OrderStoreSummary {
+  name: string;
+  address: string;
+  phone: string;
+}
+
+/**
+ * docs/11-api-spec.md API-024 응답. PENDING 주문도 본인 소유면 조회할 수 있다.
+ * `store`·`statusHistory`는 SC-008(주문 완료)·SC-010(주문 상세)이 필요로 하는 매장 요약과
+ * 상태 변경 이력이다(11번 응답 예시에 있으나 SC-005~007 슬라이스에서는 쓰지 않아 빠져
+ * 있었다). `noShowAt`·`refunded`는 NO_SHOW 주문에만 내려온다(11번 §5 API-024 설명).
+ */
 export interface OrderDetailResponse {
   serverTime: string;
   orderId: number;
@@ -42,11 +70,56 @@ export interface OrderDetailResponse {
   pickupStartAt: string | null;
   pickupEndAt: string | null;
   noShowDueAt: string | null;
+  noShowAt?: string | null;
+  refunded?: boolean;
   cancelable: boolean;
   cancelableUntil: string | null;
-  cancelUnavailableReason: string | null;
-  canceledBy: string | null;
+  cancelUnavailableReason: CancelUnavailableReason | null;
+  canceledBy: OrderActorType | null;
   cancelReason: string | null;
+  store: OrderStoreSummary;
+  statusHistory: OrderStatusHistoryEntry[];
+}
+
+/** docs/11-api-spec.md API-023 요청 `status` 허용값(전체 조회는 생략). */
+export type OrderListStatusFilter = "IN_PROGRESS" | "COMPLETED" | "CANCELED" | "NO_SHOW";
+
+/** docs/11-api-spec.md API-023 응답 `items[]`. SC-009 주문 카드에 쓴다. */
+export interface OrderListItem {
+  orderId: number;
+  orderNo: string;
+  orderedAt: string;
+  status: OrderStatusValue;
+  pickupStartAt: string | null;
+  pickupEndAt: string | null;
+  pickupNumber: string | null;
+  totalAmount: number;
+  itemSummary: string;
+}
+
+/** docs/11-api-spec.md API-023 응답. */
+export interface OrderListResponse {
+  items: OrderListItem[];
+  page: { number: number; size: number; totalElements: number };
+}
+
+/** docs/11-api-spec.md API-025 응답 `stockResults[]`. */
+export interface CancelOrderStockResult {
+  productId: number;
+  quantity: number;
+  restored: boolean;
+  reason: "CANCEL_RESTORE" | "CANCEL_DISCARD";
+  note?: string;
+}
+
+/** docs/11-api-spec.md API-025 응답. */
+export interface CancelOrderResponse {
+  orderId: number;
+  status: OrderStatusValue;
+  canceledAt: string;
+  canceledBy: OrderActorType;
+  slotReleased: boolean;
+  stockResults: CancelOrderStockResult[];
 }
 
 /** docs/11-api-spec.md API-018 응답. */

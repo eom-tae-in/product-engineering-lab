@@ -96,6 +96,12 @@
 .font-caption {
   font: 400 13px/1.5 var(--font-family);
 }
+/* docs/08 §4.2: 픽업 번호(SC-008)는 예외적으로 --font-display를 40px로 키운다. */
+.font-display-pickup {
+  font: 700 40px/1.2 var(--font-family);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.02em;
+}
 
 body {
   background: var(--color-bg);
