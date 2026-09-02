@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { http, HttpResponse } from "msw";
@@ -7,6 +7,13 @@ import { AdminAuthProvider } from "@/lib/auth/admin-auth";
 import PickupLookupPage from "./page";
 
 const BASE = "http://test.local";
+
+// SC-102가 `?number=`로 번호를 넘긴다. 기본은 빈 쿼리(직접 진입)다.
+let searchParamsValue = "";
+
+vi.mock("next/navigation", () => ({
+  useSearchParams: () => new URLSearchParams(searchParamsValue),
+}));
 
 function renderPage() {
   return render(
@@ -58,6 +65,26 @@ async function enterAndSubmit(value: string) {
 }
 
 describe("SC-109 픽업 번호 조회", () => {
+  beforeEach(() => {
+    searchParamsValue = "";
+  });
+
+  it("SC-102가 넘긴 번호로 진입하면 다시 입력하지 않아도 바로 조회한다", async () => {
+    searchParamsValue = "number=42";
+    mockAuthenticatedSession();
+    let requestedUrl: URL | null = null;
+    server.use(
+      http.get(`${BASE}/api/admin/orders/by-pickup-number`, ({ request }) => {
+        requestedUrl = new URL(request.url);
+        return HttpResponse.json(sampleDetail());
+      })
+    );
+    renderPage();
+
+    expect(await screen.findByText("김지현")).toBeInTheDocument();
+    expect((requestedUrl as unknown as URL | null)?.searchParams.get("pickupNumber")).toBe("042");
+  });
+
   it("기본(조회 전): 오늘 영업일 기준 안내와 조회 버튼을 보여준다", async () => {
     mockAuthenticatedSession();
     renderPage();

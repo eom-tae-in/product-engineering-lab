@@ -12,15 +12,22 @@ export interface FetchAdminOrdersParams {
   /** `YYYY-MM-DD`. 생략하면 서버 기본값(오늘·내일)을 쓴다(API-112). */
   pickupDate?: string;
   status?: AdminOrderStatusFilter;
+  /**
+   * 픽업 시간대 ID(API-112 `slotId`). SC-108은 유효한 시간대 목록을 얻을 방법이 없어
+   * 쓰지 않지만(같은 파일 `AdminOrderListPage` 주석 참고), SC-111은 API-118 응답의
+   * `slotId`를 그대로 넘겨 그 시간대의 주문 목록을 펼쳐 보여줄 때 쓴다.
+   */
+  slotId?: number;
 }
 
-/** API-112 주문 목록 조회. SC-108이 쓴다. */
+/** API-112 주문 목록 조회. SC-108·SC-111(시간대 펼치기)이 쓴다. */
 export function fetchAdminOrders(
   params: FetchAdminOrdersParams = {}
 ): Promise<AdminOrderListResponse> {
   const query = new URLSearchParams();
   if (params.pickupDate) query.set("pickupDate", params.pickupDate);
   if (params.status) query.set("status", params.status);
+  if (params.slotId !== undefined) query.set("slotId", String(params.slotId));
   const qs = query.toString();
   return clientRequest<AdminOrderListResponse>(`/api/admin/orders${qs ? `?${qs}` : ""}`, {
     method: "GET",
