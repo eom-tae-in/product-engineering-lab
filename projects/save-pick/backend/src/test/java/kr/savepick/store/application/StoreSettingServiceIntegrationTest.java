@@ -12,6 +12,7 @@ import kr.savepick.common.error.BusinessException;
 import kr.savepick.common.error.ErrorCode;
 import kr.savepick.common.time.ServerClock;
 import kr.savepick.support.TestcontainersConfig;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -42,6 +43,27 @@ class StoreSettingServiceIntegrationTest {
 
     @Autowired
     private JdbcTemplate jdbcTemplate;
+
+    /**
+     * 영향 범위 지표(excludedFutureSlotCount·keptConfirmedOrderCount)는 D+0·D+1의
+     * {@code pickup_slots} **전체**를 세므로, 같은 JVM에서 먼저 끝난 트랜잭션 없는 테스트들이
+     * 커밋해 둔 슬롯이 남아 있으면 개수가 실행 순서에 따라 달라진다.
+     *
+     * <p>참조 중인 슬롯을 남겨두면(FK 회피) 부족하다 — 취소된 주문이 참조하는 슬롯은
+     * {@code reserved_count = 0}이라 "제외 대상"으로 세어지고, 확정 주문이 남은 슬롯은
+     * "유지된 주문 수"에 더해진다. 그래서 참조를 먼저 끊고 두 날짜의 슬롯을 모두 지워
+     * 두 테스트가 스스로 만든 슬롯만 세게 한다.
+     *
+     * <p>이 클래스는 {@code @Transactional}이라 이 정리도 테스트가 끝나면 롤백된다 —
+     * 다른 테스트의 데이터를 실제로 지우지 않는다.
+     */
+    @BeforeEach
+    void isolatePickupSlotsOfTodayAndTomorrow() {
+        jdbcTemplate.update(
+                "UPDATE orders SET pickup_slot_id = NULL WHERE pickup_slot_id IN "
+                        + "(SELECT id FROM pickup_slots WHERE slot_date IN (CURRENT_DATE, CURRENT_DATE + 1))");
+        jdbcTemplate.update("DELETE FROM pickup_slots WHERE slot_date IN (CURRENT_DATE, CURRENT_DATE + 1)");
+    }
 
     @Test
     @DisplayName("TC-101_종료_시각이_시작_시각보다_같거나_이르면_BUSINESS_HOUR_INVALID이다")
@@ -96,13 +118,6 @@ class StoreSettingServiceIntegrationTest {
     @Test
     @DisplayName("픽업_슬롯이_없으면_excludedFutureSlotCount와_keptConfirmedOrderCount는_0이다")
     void 픽업_슬롯이_없으면_excludedFutureSlotCount와_keptConfirmedOrderCount는_0이다() {
-        // 같은 테스트 실행(JVM) 안에서 order/concurrency의 트랜잭션 없는 테스트들이 실제
-        // pickup_slots를 남길 수 있다 — 이 테스트만의 격리를 위해 오늘·내일 슬롯 중 아직 어떤
-        // 주문도 참조하지 않는 것만 지운다(FK 때문에 참조 중인 슬롯은 지울 수 없다).
-        jdbcTemplate.update(
-                "DELETE FROM pickup_slots WHERE slot_date IN (CURRENT_DATE, CURRENT_DATE + 1) "
-                        + "AND id NOT IN (SELECT pickup_slot_id FROM orders WHERE pickup_slot_id IS NOT NULL)");
-
         StoreSettingService.UpdateResult result = storeSettingService.updateSettings(
                 LocalTime.of(10, 0), LocalTime.of(21, 0), (short) 20, List.of());
 
@@ -114,13 +129,6 @@ class StoreSettingServiceIntegrationTest {
     @Test
     @DisplayName("FR_056_영업_종료_시각을_앞당기면_예약_없는_미래_슬롯은_제외되고_확정_주문이_있는_슬롯은_유지된다")
     void FR_056_영업_종료_시각을_앞당기면_예약_없는_미래_슬롯은_제외되고_확정_주문이_있는_슬롯은_유지된다() {
-        // 같은 테스트 실행 안에서 다른(트랜잭션 없는) 테스트가 표준 시간대 그리드(10:00~22:00,
-        // 30분 단위)를 이미 만들어 뒀을 수 있다 — 그 잔여 슬롯들이 아래 cutoff(15:00) 이후 구간에
-        // 섞여 개수를 부풀리지 않도록, 아직 어떤 주문도 참조하지 않는 오늘·내일 슬롯을 먼저 지운다.
-        jdbcTemplate.update(
-                "DELETE FROM pickup_slots WHERE slot_date IN (CURRENT_DATE, CURRENT_DATE + 1) "
-                        + "AND id NOT IN (SELECT pickup_slot_id FROM orders WHERE pickup_slot_id IS NOT NULL)");
-
         // BATCH-05는 D+0·D+1에만 슬롯을 만든다 — 여기서는 날짜·시간 경계 계산의 단순함을 위해
         // 내일(D+1) 15:00 이후 슬롯만 직접 만든다(store 도메인은 pickup 엔티티를 몰라도 되도록
         // StoreSettingImpactReadDao가 pickup_slots를 네이티브 쿼리로만 읽는다).
@@ -137,10 +145,9 @@ class StoreSettingServiceIntegrationTest {
     }
 
     /**
-     * 같은 테스트 실행 안에서 BATCH-05 표준 시간대(10:00~22:00, 30분 단위)가 다른(트랜잭션
-     * 없는) 테스트로 인해 이미 만들어져 있을 수 있다 — {@code UNIQUE(store_id, start_at)}
-     * 충돌을 오류로 만들지 않고 원하는 reserved_count로 덮어써 이 테스트가 항상 스스로
-     * 원하는 값을 통제하게 한다.
+     * {@link #isolatePickupSlotsOfTodayAndTomorrow()}가 두 날짜를 비워 두므로 통상 충돌은
+     * 없지만, {@code UNIQUE(store_id, start_at)} 충돌이 나더라도 이 테스트가 원하는
+     * reserved_count로 덮어쓰게 해 둔다.
      */
     private void insertSlot(LocalDate date, LocalTime time, short reservedCount) {
         LocalDateTime startAt = date.atTime(time);
