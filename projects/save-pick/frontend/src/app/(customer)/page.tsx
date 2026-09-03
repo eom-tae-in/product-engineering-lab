@@ -27,9 +27,12 @@ function parseHideSoldOut(value: string | string[] | undefined): boolean {
  * fetch한다(ARCHITECTURE.md 데이터 페칭 규칙). 정렬·품절 숨기기는 쿼리스트링으로
  * 표현해 이 화면 자체를 다시 요청하게 한다(`ProductListControls`).
  *
- * 판단(범위 제외): "마감으로 목록에서 빠진 상품 1회 안내 줄"은 연속 조회 간 비교가
- * 필요한데 이 슬라이스에는 폴링·실시간 갱신 인프라가 없어 구현하지 않는다. 다음
- * 슬라이스에서 재조회 주기가 정해지면 함께 추가한다.
+ * 06 SC-001 「마감 도달」 중 목록에서 즉시 빼는 것은 조회 API가 처리한다(11번 §11
+ * BATCH-02 보완). 반면 `상품 N건이 마감돼 목록에서 빠졌어요` 안내 줄은 **첫 버전에서
+ * 제외하기로 확정했다(2026-09-03)** — "빠졌다"를 알려면 직전 조회 결과와 비교해야 하는데
+ * 이 화면은 서버 렌더 + 사용자 새로고침 방식이라 직전 상태를 갖고 있지 않고, 안내 줄
+ * 하나를 위해 폴링을 도입하는 비용이 이득보다 크다고 봤다. 마감 상품은 이미 목록에서
+ * 사라져 잘못 담을 수는 없다. 사유와 되살릴 조건은 06 SC-001 구현 메모에 있다.
  */
 export default async function HomePage({ searchParams }: PageProps<"/">) {
   const params = await searchParams;
