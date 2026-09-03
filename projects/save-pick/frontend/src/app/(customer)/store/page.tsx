@@ -1,5 +1,5 @@
 import { fetchStoreInfo } from "@/features/store/api";
-import { EmptyState } from "@/components/ui/EmptyState";
+import { UpcomingPickupCard } from "@/features/store/components/UpcomingPickupCard";
 import { ErrorState } from "@/components/ui/ErrorState";
 import { RefreshButton } from "@/components/ui/RefreshButton";
 
@@ -8,18 +8,14 @@ const PICKUP_STEPS = ["시간대에 방문", "픽업 번호 말하기", "수령 
 
 /**
  * SC-015 · 매장·픽업 안내 (docs/06-screen-list.md §3).
- * 비로그인도 볼 수 있는 조회 전용 화면이라 Server Component에서 `serverGet`으로
- * 직접 fetch한다(ARCHITECTURE.md "데이터 페칭 규칙"). 로그인 여부에 따른 분기가
- * 없어 `useAuth()`도 쓰지 않는다.
+ * 비로그인도 볼 수 있는 조회 전용 화면이라 매장 정보는 Server Component에서
+ * `serverGet`으로 직접 fetch한다(ARCHITECTURE.md "데이터 페칭 규칙").
+ *
+ * 「예정된 픽업」만 본인 주문 조회라 액세스 토큰이 있는 클라이언트에서만 부를 수 있어
+ * `UpcomingPickupCard`(Client Component)로 분리했다.
  *
  * 로딩 상태는 같은 라우트의 `loading.tsx`가 맡는다(Next.js App Router가 이 세그먼트를
  * 그리는 동안 자동으로 보여준다).
- *
- * 판단: "확정 주문이 있으면 픽업 시간대와 노쇼 전환 예정 시각을 보여준다"(06 표시 정보)는
- * 이번 슬라이스에서 구현하지 않는다. 주문 조회 API(SC-010과 공유하는 도메인)가 아직
- * 이 슬라이스 범위가 아니기 때문이다. 대신 06의 빈 상태(`예정된 픽업이 없어요`)를
- * 로그인 여부와 무관하게 항상 렌더한다. 다음 슬라이스(주문 도메인)가 이 영역을
- * 로그인 상태의 확정 주문 조회로 교체해야 한다.
  */
 export default async function StorePage() {
   let store;
@@ -37,7 +33,7 @@ export default async function StorePage() {
     <div className="flex flex-col gap-3 p-4">
       <div className="rounded-lg border border-border bg-surface p-4 shadow-[var(--shadow-card)]">
         <h2 className="font-heading mb-3">예정된 픽업</h2>
-        <EmptyState message="예정된 픽업이 없어요" />
+        <UpcomingPickupCard />
       </div>
 
       <div className="rounded-lg border border-border bg-surface p-4 shadow-[var(--shadow-card)]">
