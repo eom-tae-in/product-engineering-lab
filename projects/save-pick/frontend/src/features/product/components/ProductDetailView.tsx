@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/Button";
 import { QuantityStepper } from "@/components/ui/QuantityStepper";
 import { addToCart } from "@/features/cart/api";
 import { ApiError } from "@/lib/api-client";
-import { formatKstTime, formatWon } from "@/lib/format";
+import { formatKstClosing, formatWon } from "@/lib/format";
 import type { ProductDetailResponse } from "../types";
 
 export interface ProductDetailViewProps {
@@ -86,7 +86,7 @@ export function ProductDetailView({ product }: ProductDetailViewProps) {
                 product.lowStock ? " · 소진 임박" : ""
               }`}
         </p>
-        <p className="font-caption text-text-weak">{`오늘 ${formatKstTime(product.closingAt)} 마감`}</p>
+        <p className="font-caption text-text-weak">{`${formatKstClosing(product.closingAt)} 마감`}</p>
         <p className="font-caption text-text-weak">{`1회 최대 ${product.maxOrderQuantity}개`}</p>
       </div>
 

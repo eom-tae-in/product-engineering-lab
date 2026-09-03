@@ -101,21 +101,40 @@ save-pick/
 
 ```bash
 cd backend
-docker compose up -d          # 로컬 PostgreSQL 15 기동
-./gradlew bootRun             # 앱 기동 시 Flyway 마이그레이션 자동 적용
+docker compose up -d                          # 로컬 PostgreSQL 15 기동
+SPRING_PROFILES_ACTIVE=dev ./gradlew bootRun  # Flyway 마이그레이션 + 데모 데이터 자동 생성
 curl http://localhost:8080/actuator/health
 ```
+
+`dev` 프로파일로 띄우면 `DevDataSeeder`가 최초 1회 데모 데이터를 넣는다. **관리자 계정을 만드는 유일한 경로다** — 12번(§5 P7)이 관리자 가입 API를 두지 않기로 해서, 이 시드 없이는 관리자 화면(SC-101~113)에 로그인할 수 없다.
+
+| 계정 | 이메일 | 비밀번호 |
+|---|---|---|
+| 관리자 | `admin@savepick.kr` | `adminpass1` |
+| 고객 | `customer@savepick.kr` | `savepick123` |
+
+상품 5개(마감까지 남은 시간이 달라 할인 구간 0·30·50·70%가 모두 보인다)와 재고도 함께 들어간다. 픽업 시간대는 기동 시 BATCH-05가 D+0·D+1에 자동 생성한다. 프로파일 없이 띄우면 시드가 돌지 않는다.
 
 ### 프론트엔드
 
 ```bash
 cd frontend
+cp .env.example .env.local    # NEXT_PUBLIC_API_BASE_URL — 없으면 모든 화면의 조회가 실패한다
 npm install
 npm run dev                   # http://localhost:3000
 ```
 
+백엔드가 `http://localhost:8080`에 떠 있어야 한다(CORS는 `http://localhost:3000`만 허용한다).
+
 ## 현재 개발 상태
 
 - **설계 문서(G0~G4)**: 기획·화면설계·기술설계·검토·발행까지 전 과정 완료. 상세 현황은 `docs/00-status.md` 참고.
-- **백엔드**: Gradle/Spring Boot 프로젝트 스캐폴딩, `docs/14` 기준 패키지 구조(빈 패키지), Flyway 마이그레이션(19개 테이블 전체 스키마) 완료. 실제 도메인 엔티티·서비스·컨트롤러 구현은 아직 진행 전입니다.
-- **프론트엔드**: `create-next-app` 기본 템플릿 상태이며, 실제 화면 구현은 아직 진행 전입니다. 화면 설계는 `wireframes/`의 HTML 와이어프레임을 참고합니다.
+- **백엔드**: 도메인 7종(계정·매장·상품·재고·장바구니·픽업·주문)과 배치 전량 구현. 통합 테스트 280개 통과(`./gradlew test`, Testcontainers로 실제 PostgreSQL 사용).
+- **프론트엔드**: 화면 28개(고객 SC-001~015, 관리자 SC-101~113) 전량 구현. 테스트 302개 통과(`npm run verify` = typecheck → lint → test).
+- **연동**: 위 실행 방법대로 띄워 고객 흐름(상품 조회 → 장바구니 → 주문서·재고 선점 → 픽업 시간대 → 가상 결제 → 픽업 번호 발급)과 관리자 조회를 실제 API로 확인했습니다.
+
+### 남은 작업
+
+- `docs/16`의 TC 125개 중 백엔드 테스트가 69개를 이름으로 참조합니다. 프론트 테스트는 화면 단위로 짜여 있어 TC 번호 추적이 아직 붙어 있지 않습니다.
+- CI 파이프라인이 없어 검증(`./gradlew test`, `npm run verify`)은 수동 실행입니다.
+- 문서 간 미해소 불일치 2건: 06 SC-112의 관리자 수동 노쇼 처리(11번 가정 A-A7이 해당 API를 두지 않기로 함), 06 SC-102 메뉴의 "재고 이력"(상품을 고르지 않고 여는 라우트가 없어 재고 관리로 연결).

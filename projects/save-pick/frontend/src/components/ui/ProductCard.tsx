@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { Badge } from "./Badge";
-import { formatKstTime, formatWon } from "@/lib/format";
+import { formatKstClosing, formatWon } from "@/lib/format";
 
 export interface ProductCardData {
   productId: number;
@@ -72,7 +72,7 @@ export function ProductCard({ product }: ProductCardProps) {
         <p className="font-caption text-text-weak">
           {soldOut ? "품절됐어요" : `남은 수량 ${availableQuantity}개${lowStock ? " · 소진 임박" : ""}`}
         </p>
-        <p className="font-caption text-text-weak">{`오늘 ${formatKstTime(closingAt)} 마감`}</p>
+        <p className="font-caption text-text-weak">{`${formatKstClosing(closingAt)} 마감`}</p>
       </div>
     </Link>
   );

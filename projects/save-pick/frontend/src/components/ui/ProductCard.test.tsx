@@ -1,6 +1,7 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
 import { ProductCard, type ProductCardData } from "./ProductCard";
+import { setServerTimeOffsetMs } from "@/lib/server-time";
 
 function baseProduct(overrides: Partial<ProductCardData> = {}): ProductCardData {
   return {
@@ -18,6 +19,18 @@ function baseProduct(overrides: Partial<ProductCardData> = {}): ProductCardData 
 }
 
 describe("ProductCard", () => {
+  // 마감 표기가 "오늘/내일/날짜"로 갈리므로(formatKstClosing) 픽스처의 마감일이 항상
+  // "오늘"이 되도록 시각을 고정한다. 고정하지 않으면 실행하는 날짜에 따라 결과가 바뀐다.
+  beforeEach(() => {
+    setServerTimeOffsetMs(0);
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-08-28T02:00:00.000Z")); // KST 2026-08-28 11:00
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
   it("docs/09 §2.4 6개 정보를 보여준다: 정가·할인가·할인율·절약액·잔여 수량·마감 시각", () => {
     render(<ProductCard product={baseProduct()} />);
 

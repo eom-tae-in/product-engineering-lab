@@ -1,10 +1,11 @@
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { http, HttpResponse } from "msw";
 import { server } from "@/test/server";
 import ProductDetailPage from "./page";
 import ProductDetailLoading from "./loading";
+import { setServerTimeOffsetMs } from "@/lib/server-time";
 
 const BASE = "http://test.local";
 
@@ -45,6 +46,18 @@ async function renderDetail() {
 }
 
 describe("SC-003 상품 상세", () => {
+  // 마감 표기가 "오늘/내일/날짜"로 갈리므로(formatKstClosing) 픽스처의 마감일이 항상
+  // "오늘"이 되도록 시각을 고정한다. 고정하지 않으면 실행하는 날짜에 따라 결과가 바뀐다.
+  beforeEach(() => {
+    setServerTimeOffsetMs(0);
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    vi.setSystemTime(new Date("2026-08-31T02:00:00.000Z")); // KST 2026-08-31 11:00
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
   it("기본 상태: 9개 표시 정보와 담기 버튼을 보여준다", async () => {
     mockDetail(sampleDetail());
 
