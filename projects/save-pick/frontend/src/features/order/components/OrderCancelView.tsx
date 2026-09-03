@@ -11,12 +11,23 @@ import { ErrorState } from "@/components/ui/ErrorState";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { ApiError } from "@/lib/api-client";
 import { formatKstDateTime, formatKstTime, formatWon } from "@/lib/format";
+import { nowOnServer } from "@/lib/server-time";
 
 type SubmitErrorState =
   | { kind: "deadlinePassed"; time: string }
   | { kind: "notAllowed"; currentStatus: string | null }
   | { kind: "communication" }
   | null;
+
+/**
+ * BR-019 — 상품 마감 이후에 취소된 수량은 재고로 되돌리지 않고 폐기로 기록한다.
+ * 품목마다 마감 시각이 달라 하나라도 지났으면 그 품목은 되돌아오지 않으므로, 경고를
+ * 보여주는 쪽을 택한다(06 SC-011은 마감 전/후 두 문구만 정하고 섞인 경우를 정하지 않았다).
+ */
+function hasClosedItem(order: OrderDetailResponse): boolean {
+  const now = nowOnServer();
+  return order.items.some((item) => new Date(item.productClosingAt).getTime() <= now);
+}
 
 function pickupTimeText(order: OrderDetailResponse): string | null {
   if (!order.pickupStartAt || !order.pickupEndAt) return null;
@@ -174,13 +185,11 @@ export function OrderCancelView({ orderId }: { orderId: number }) {
 
       <div className="rounded-lg border border-border bg-surface p-4 shadow-[var(--shadow-card)]">
         <p className="font-body text-warning">부분 취소는 할 수 없어요. 주문 전체가 취소돼요</p>
-        {/*
-         * 06 SC-011은 상품 마감 이후이면 `마감 시각이 지나 재고로 되돌리지 않아요`(BR-019)로
-         * 분기하라고 하지만, API-024 응답에 상품 마감 시각이 없어 취소 전에는 판단할 수 없다.
-         * (마감 여부는 API-025 응답 `stockResults[].reason`으로 취소 후에야 알 수 있다.)
-         * 11번에 마감 정보가 추가되면 여기서 분기한다.
-         */}
-        <p className="font-caption mt-2 text-text-weak">취소한 수량은 바로 다시 판매돼요</p>
+        <p className="font-caption mt-2 text-text-weak">
+          {hasClosedItem(order)
+            ? "마감 시각이 지나 재고로 되돌리지 않아요"
+            : "취소한 수량은 바로 다시 판매돼요"}
+        </p>
       </div>
 
       <div className="mt-auto flex flex-col gap-2">

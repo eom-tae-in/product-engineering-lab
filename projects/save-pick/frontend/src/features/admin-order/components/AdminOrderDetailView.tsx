@@ -16,6 +16,7 @@ import { ErrorState } from "@/components/ui/ErrorState";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { ApiError } from "@/lib/api-client";
 import { formatKstDateTime, formatKstTime, formatWon } from "@/lib/format";
+import { nowOnServer } from "@/lib/server-time";
 
 export interface AdminOrderDetailViewProps {
   orderId: number;
@@ -45,6 +46,16 @@ function statusHistoryTime(
   status: OrderStatusValue
 ): string | null {
   return order.statusHistory.find((entry) => entry.toStatus === status)?.occurredAt ?? null;
+}
+
+/**
+ * BR-019 — 상품 마감 이후 취소분은 재고로 되돌리지 않고 폐기로 기록한다. 품목마다 마감이
+ * 달라 하나라도 지났으면 그 품목은 되돌아오지 않으므로 경고 쪽 문구를 보여준다
+ * (고객 화면 `OrderCancelView`와 같은 판단).
+ */
+function hasClosedItem(order: AdminOrderDetailResponse): boolean {
+  const now = nowOnServer();
+  return order.items.some((item) => new Date(item.productClosingAt).getTime() <= now);
 }
 
 function totalQuantityOf(order: AdminOrderDetailResponse): number {
@@ -414,14 +425,10 @@ export function AdminOrderDetailView({ orderId }: AdminOrderDetailViewProps) {
             {cancelFieldError ? (
               <p className="font-caption mt-1 text-danger">{cancelFieldError}</p>
             ) : (
-              /*
-               * 판단: API-114(주문 상세 조회) 응답에 상품 마감 시각이 없어 취소 전에는
-               * "마감 전/후"(BR-019)를 알 수 없다. `OrderCancelView`(고객, SC-011)와 같은
-               * 이유로 마감 전 문구를 기본값으로 보여준다 — 11번에 마감 정보가 추가되면
-               * 여기서 분기한다(최종 보고에도 남긴다).
-               */
               <p className="font-caption mt-1 text-text-weak">
-                {`취소하면 수량 ${totalQuantityOf(order)}개가 판매 가능 재고로 돌아가요`}
+                {hasClosedItem(order)
+                  ? "마감 시각이 지나 재고로 되돌리지 않고 폐기로 기록해요"
+                  : `취소하면 수량 ${totalQuantityOf(order)}개가 판매 가능 재고로 돌아가요`}
               </p>
             )}
           </div>

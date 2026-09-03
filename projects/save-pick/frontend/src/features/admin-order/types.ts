@@ -53,6 +53,8 @@ export interface AdminOrderDetailItem {
   quantity: number;
   unitPrice: number;
   lineAmount: number;
+  /** 주문 시점 스냅샷. 취소 시 재고 복구 여부가 이 시각으로 갈린다(BR-019). */
+  productClosingAt: string;
 }
 
 export type PaymentAttemptStatus = "SUCCEEDED" | "FAILED";

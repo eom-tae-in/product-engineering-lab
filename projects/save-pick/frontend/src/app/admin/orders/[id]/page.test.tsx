@@ -1,9 +1,10 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { http, HttpResponse } from "msw";
 import { server } from "@/test/server";
 import { AdminAuthProvider } from "@/lib/auth/admin-auth";
+import { setServerTimeOffsetMs } from "@/lib/server-time";
 import AdminOrderDetailPage from "./page";
 
 const BASE = "http://test.local";
@@ -37,8 +38,8 @@ function sampleDetail(overrides: Record<string, unknown> = {}) {
     pickupEndAt: "2026-08-28T20:30:00+09:00",
     customer: { name: "김지현", phone: "01098765432" },
     items: [
-      { productId: 12, name: "삼겹살 500g", quantity: 2, unitPrice: 8400, lineAmount: 16800 },
-      { productId: 13, name: "대파 1단", quantity: 1, unitPrice: 2100, lineAmount: 2100 },
+      { productId: 12, name: "삼겹살 500g", quantity: 2, unitPrice: 8400, lineAmount: 16800, productClosingAt: "2026-08-31T21:00:00+09:00" },
+      { productId: 13, name: "대파 1단", quantity: 1, unitPrice: 2100, lineAmount: 2100, productClosingAt: "2026-08-31T21:00:00+09:00" },
     ],
     totalAmount: 18900,
     paymentAttempts: [
@@ -70,6 +71,18 @@ function mockDetail(detail: Record<string, unknown>) {
 }
 
 describe("SC-110 주문 상세 (관리자)", () => {
+  // 취소 시트의 재고 복구 안내가 상품 마감 시각과 "지금"의 비교로 갈리므로(BR-019)
+  // 픽스처 시점으로 시각을 고정한다. 고정하지 않으면 실행 날짜에 따라 문구가 바뀐다.
+  beforeEach(() => {
+    setServerTimeOffsetMs(0);
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    vi.setSystemTime(new Date("2026-08-28T09:00:00.000Z")); // KST 2026-08-28 18:00
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
   it("기본 상태(CONFIRMED): 주문 정보와 세 가지 액션을 모두 보여준다", async () => {
     mockAuthenticatedSession();
     mockDetail(sampleDetail());
@@ -407,5 +420,33 @@ describe("SC-110 주문 상세 (관리자)", () => {
     expect(await screen.findByText("21:00에 노쇼로 전환된 주문이에요")).toBeInTheDocument();
     expect(screen.getByText("더 이상 바꿀 수 있는 상태가 없어요")).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "관리자 취소" })).not.toBeInTheDocument();
+  });
+
+  it("취소 시트: 상품 마감 이후면 재고로 되돌리지 않는다고 안내한다", async () => {
+    mockAuthenticatedSession();
+    // BR-019 — 마감이 지난 품목은 취소해도 재고로 돌아오지 않고 폐기로 기록된다.
+    mockDetail(
+      sampleDetail({
+        items: [
+          {
+            productId: 12,
+            name: "삼겹살 500g",
+            quantity: 2,
+            unitPrice: 8400,
+            lineAmount: 16800,
+            productClosingAt: "2020-01-01T21:00:00+09:00",
+          },
+        ],
+      })
+    );
+    await renderPage();
+    await screen.findByText("042");
+
+    await userEvent.click(screen.getByRole("button", { name: "관리자 취소" }));
+    const dialog = screen.getByRole("dialog");
+
+    expect(
+      within(dialog).getByText("마감 시각이 지나 재고로 되돌리지 않고 폐기로 기록해요")
+    ).toBeInTheDocument();
   });
 });

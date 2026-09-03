@@ -28,7 +28,7 @@ public record AdminOrderDetailResponse(
                 detail.pickupStartAt() == null ? null : detail.pickupStartAt().atZone(zone).toOffsetDateTime(),
                 detail.pickupEndAt() == null ? null : detail.pickupEndAt().atZone(zone).toOffsetDateTime(),
                 new AdminOrderCustomerResponse(order.getContactName(), order.getContactPhone()),
-                detail.items().stream().map(OrderDetailItemResponse::from).toList(),
+                detail.items().stream().map(item -> OrderDetailItemResponse.from(item, zone)).toList(),
                 order.getTotalAmount(),
                 detail.paymentAttempts().stream().map(a -> PaymentAttemptResponse.from(a, zone)).toList(),
                 detail.history().stream().map(h -> OrderStatusHistoryResponse.from(h, zone)).toList(),

@@ -1,9 +1,10 @@
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { http, HttpResponse } from "msw";
 import { server } from "@/test/server";
 import { AuthProvider } from "@/lib/auth/customer-auth";
+import { setServerTimeOffsetMs } from "@/lib/server-time";
 import OrderCancelPage from "./page";
 
 const BASE = "http://test.local";
@@ -62,6 +63,7 @@ function sampleDetail(overrides: Record<string, unknown> = {}) {
         quantity: 2,
         unitPrice: 6000,
         lineAmount: 12000,
+        productClosingAt: "2026-08-31T21:00:00+09:00",
       },
     ],
     totalAmount: 12000,
@@ -109,6 +111,18 @@ async function renderCancelable() {
 }
 
 describe("SC-011 주문 취소 확인", () => {
+  // 재고 복구 안내가 상품 마감 시각과 "지금"의 비교로 갈리므로(BR-019) 픽스처 시점으로
+  // 시각을 고정한다. 고정하지 않으면 실행하는 날짜에 따라 문구가 바뀐다.
+  beforeEach(() => {
+    setServerTimeOffsetMs(0);
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    vi.setSystemTime(new Date("2026-08-31T01:05:00.000Z")); // KST 2026-08-31 10:05
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
   it("기본 상태: 취소할 주문 요약과 전체 취소 안내를 보여준다", async () => {
     await renderCancelable();
 
@@ -307,5 +321,49 @@ describe("SC-011 주문 취소 확인", () => {
     await renderPage();
 
     await waitFor(() => expect(replaceMock).toHaveBeenCalledWith("/login"));
+  });
+
+  it("상품 마감 이후면 재고로 되돌리지 않는다고 안내한다", async () => {
+    mockAuthenticatedSession();
+    // BR-019 — 마감이 지난 품목은 취소해도 재고로 돌아오지 않고 폐기로 기록된다.
+    mockDetail(
+      sampleDetail({
+        items: [
+          {
+            productId: 12,
+            name: "국내산 삼겹살 300g",
+            quantity: 2,
+            unitPrice: 6000,
+            lineAmount: 12000,
+            productClosingAt: "2020-01-01T21:00:00+09:00",
+          },
+        ],
+      })
+    );
+    await renderPage();
+
+    expect(await screen.findByText("마감 시각이 지나 재고로 되돌리지 않아요")).toBeInTheDocument();
+    expect(screen.queryByText("취소한 수량은 바로 다시 판매돼요")).not.toBeInTheDocument();
+  });
+
+  it("마감 전이면 바로 다시 판매된다고 안내한다", async () => {
+    mockAuthenticatedSession();
+    mockDetail(
+      sampleDetail({
+        items: [
+          {
+            productId: 12,
+            name: "국내산 삼겹살 300g",
+            quantity: 2,
+            unitPrice: 6000,
+            lineAmount: 12000,
+            productClosingAt: "2099-01-01T21:00:00+09:00",
+          },
+        ],
+      })
+    );
+    await renderPage();
+
+    expect(await screen.findByText("취소한 수량은 바로 다시 판매돼요")).toBeInTheDocument();
   });
 });

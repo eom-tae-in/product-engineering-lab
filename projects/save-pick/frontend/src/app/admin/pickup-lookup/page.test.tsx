@@ -44,8 +44,8 @@ function sampleDetail(overrides: Record<string, unknown> = {}) {
     pickupEndAt: "2026-08-28T20:30:00+09:00",
     customer: { name: "김지현", phone: "01098765432" },
     items: [
-      { productId: 12, name: "삼겹살 500g", quantity: 2, unitPrice: 8400, lineAmount: 16800 },
-      { productId: 13, name: "대파 1단", quantity: 1, unitPrice: 2100, lineAmount: 2100 },
+      { productId: 12, name: "삼겹살 500g", quantity: 2, unitPrice: 8400, lineAmount: 16800, productClosingAt: "2026-08-31T21:00:00+09:00" },
+      { productId: 13, name: "대파 1단", quantity: 1, unitPrice: 2100, lineAmount: 2100, productClosingAt: "2026-08-31T21:00:00+09:00" },
     ],
     totalAmount: 18900,
     paymentAttempts: [],

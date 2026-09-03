@@ -19,7 +19,7 @@ public record OrderDetailResponse(
         return new OrderDetailResponse(
                 detail.serverTime().atZone(zone).toOffsetDateTime(),
                 order.getId(), order.getOrderNo(), order.getStatus().name(), order.getCreatedAt().atZone(zone).toOffsetDateTime(),
-                detail.items().stream().map(OrderDetailItemResponse::from).toList(),
+                detail.items().stream().map(item -> OrderDetailItemResponse.from(item, zone)).toList(),
                 order.getTotalAmount(),
                 order.getPickupNumber() == null ? null : String.format("%03d", order.getPickupNumber()),
                 offset(detail.pickupStartAt(), zone), offset(detail.pickupEndAt(), zone), offset(order.getNoShowDueAt(), zone),

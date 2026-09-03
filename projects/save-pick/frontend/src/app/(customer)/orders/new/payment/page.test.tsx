@@ -46,8 +46,8 @@ function installOrderDetail(overrides: Record<string, unknown> = {}) {
         status: "PENDING",
         orderedAt: "2026-08-31T10:00:00+09:00",
         items: [
-          { productId: 12, name: "국내산 삼겹살 300g", quantity: 2, unitPrice: 6000, lineAmount: 12000 },
-          { productId: 30, name: "대파 1단", quantity: 1, unitPrice: 2100, lineAmount: 2100 },
+          { productId: 12, name: "국내산 삼겹살 300g", quantity: 2, unitPrice: 6000, lineAmount: 12000, productClosingAt: "2026-08-31T21:00:00+09:00" },
+          { productId: 30, name: "대파 1단", quantity: 1, unitPrice: 2100, lineAmount: 2100, productClosingAt: "2026-08-31T21:00:00+09:00" },
         ],
         totalAmount: 14100,
         pickupNumber: null,

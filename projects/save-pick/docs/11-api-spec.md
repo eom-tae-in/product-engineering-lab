@@ -865,8 +865,8 @@
   "status": "CONFIRMED",
   "orderedAt": "2026-08-28T19:04:12+09:00",
   "items": [
-    { "productId": 12, "name": "국내산 삼겹살 300g", "quantity": 2, "unitPrice": 6000, "lineAmount": 12000 },
-    { "productId": 30, "name": "유기농 시금치", "quantity": 1, "unitPrice": 1500, "lineAmount": 1500 }
+    { "productId": 12, "name": "국내산 삼겹살 300g", "quantity": 2, "unitPrice": 6000, "lineAmount": 12000, "productClosingAt": "2026-08-28T21:00:00+09:00" },
+    { "productId": 30, "name": "유기농 시금치", "quantity": 1, "unitPrice": 1500, "lineAmount": 1500, "productClosingAt": "2026-08-28T21:00:00+09:00" }
   ],
   "totalAmount": 13500,
   "pickupNumber": "017",
@@ -1338,7 +1338,7 @@ PENDING·EXPIRED는 `status`로 명시하지 않는 한 반환하지 않는다 (
   "pickupEndAt": "2026-08-28T20:00:00+09:00",
   "customer": { "name": "지현", "phone": "01098765432" },
   "items": [
-    { "productId": 12, "name": "국내산 삼겹살 300g", "quantity": 2, "unitPrice": 6000, "lineAmount": 12000 }
+    { "productId": 12, "name": "국내산 삼겹살 300g", "quantity": 2, "unitPrice": 6000, "lineAmount": 12000, "productClosingAt": "2026-08-28T21:00:00+09:00" }
   ],
   "totalAmount": 13500,
   "paymentAttempts": [
