@@ -159,6 +159,28 @@ class CartApiIntegrationTest {
     }
 
     @Test
+    @DisplayName("TC_114_남의_장바구니_품목_수량을_변경하면_404_NOT_FOUND다")
+    void TC_114_남의_장바구니_품목_수량을_변경하면_404_NOT_FOUND다() {
+        Long adminId = registerAdmin();
+        Product product = onSaleProduct("수량변경타인상품", 10, adminId);
+        HttpHeaders ownerHeaders = new HttpHeaders();
+        ownerHeaders.set("X-Guest-Token", UUID.randomUUID().toString());
+        ResponseEntity<AddCartItemResponse> added = restTemplate.exchange("/api/cart/items", HttpMethod.POST,
+                new HttpEntity<>(new AddCartItemRequest(product.getId(), 1), ownerHeaders), AddCartItemResponse.class);
+        Long cartItemId = added.getBody().cartItemId();
+
+        HttpHeaders strangerHeaders = new HttpHeaders();
+        strangerHeaders.set("X-Guest-Token", UUID.randomUUID().toString());
+        ResponseEntity<ErrorResponse> response = restTemplate.exchange(
+                "/api/cart/items/" + cartItemId, HttpMethod.PATCH,
+                new HttpEntity<>(new ChangeCartItemQuantityRequest(3), strangerHeaders), ErrorResponse.class);
+
+        // 12번 §3.3 소유권 검사 — 남의 품목임을 알리지 않고 없는 것처럼 응답한다.
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
+        assertThat(response.getBody().code()).isEqualTo("NOT_FOUND");
+    }
+
+    @Test
     @DisplayName("품목_삭제는_204를_반환한다")
     void 품목_삭제는_204를_반환한다() {
         Long adminId = registerAdmin();

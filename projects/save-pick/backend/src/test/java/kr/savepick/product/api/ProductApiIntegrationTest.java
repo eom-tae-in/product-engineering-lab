@@ -67,8 +67,8 @@ class ProductApiIntegrationTest {
     }
 
     @Test
-    @DisplayName("비로그인으로_상품_목록을_조회할_수_있다")
-    void 비로그인으로_상품_목록을_조회할_수_있다() {
+    @DisplayName("TC_009_비로그인으로_상품_목록을_조회할_수_있다")
+    void TC_009_비로그인으로_상품_목록을_조회할_수_있다() {
         Long adminId = registerAdmin();
         onSaleProduct("공개목록 상품", 10, adminId);
 

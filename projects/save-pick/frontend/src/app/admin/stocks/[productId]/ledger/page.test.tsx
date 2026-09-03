@@ -137,7 +137,9 @@ const ALL_REASON_ITEMS = [
 ];
 
 describe("SC-106 재고 변경 이력", () => {
-  it("기본 상태: 최신순 이력과 상품명, 7종 필터를 보여준다", async () => {
+  // TC-084·TC-123(X7): SC-106이 보여주는 사유 집합이 stock_ledgers.reason 7종과 정확히
+  // 일치해야 한다(재검토에서 "노쇼 미복구"를 제거하고 7종으로 재정의한 건의 회귀 확인).
+  it("TC-084 기본 상태: 최신순 이력과 상품명, 7종 필터를 보여준다", async () => {
     mockAuthenticatedSession();
     mockProductDetail();
     mockLedger(ALL_REASON_ITEMS);

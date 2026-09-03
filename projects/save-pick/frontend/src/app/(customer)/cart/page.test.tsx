@@ -497,7 +497,9 @@ describe("SC-004 장바구니", () => {
     expect(screen.getByRole("button", { name: "장바구니 새로고침" })).toBeInTheDocument();
   });
 
-  it("오류(주문서 생성 실패 · 시스템 오류): 안내 문구와 다시 시도를 하단 시트로 보여준다", async () => {
+  // TC-110·TC-121(X5): 13번 §3의 lock_timeout 초과가 INTERNAL_ERROR(500)로 올라올 때
+  // SC-004가 오류 상태로 노출하는지 확인한다.
+  it("TC-110 오류(주문서 생성 실패 · 시스템 오류): 안내 문구와 다시 시도를 하단 시트로 보여준다", async () => {
     mockAuthenticatedSession();
     installCart([sampleItem({ cartItemId: 1 })]);
     server.use(

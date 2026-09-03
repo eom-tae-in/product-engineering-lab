@@ -111,6 +111,18 @@ class OrderApiIntegrationTest {
     }
 
     @Test
+    @DisplayName("TC_009_인증_없이_주문_내역을_조회하면_401이다")
+    void TC_009_인증_없이_주문_내역을_조회하면_401이다() {
+        // TC-009 (c) — 상품 목록·상세는 비로그인도 200이지만(ProductApiIntegrationTest),
+        // 주문 내역(API-023)은 본인 주문만 보이는 자원이라 미인증이면 401이어야 한다.
+        ResponseEntity<ErrorResponse> response = restTemplate.exchange(
+                "/api/orders", HttpMethod.GET, HttpEntity.EMPTY, ErrorResponse.class);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
+        assertThat(response.getBody().code()).isEqualTo("UNAUTHENTICATED");
+    }
+
+    @Test
     @DisplayName("정상_주문서_생성_후_동일_상품_재시도는_품절이며_잔여_주문서가_남지_않는다")
     void 정상_주문서_생성_후_품절_재시도_시_잔여_주문서가_남지_않는다() {
         Long customerId = registerCustomerId();

@@ -219,6 +219,42 @@ class AdminOrderApiIntegrationTest {
     }
 
     @Test
+    @DisplayName("TC_052_픽업_번호는_같은_영업일에_중복되지_않고_취소된_번호도_재사용하지_않는다")
+    void TC_052_픽업_번호는_같은_영업일에_중복되지_않고_취소된_번호도_재사용하지_않는다() {
+        String adminToken = issueToken(registerAdminId(), Role.ADMIN);
+
+        Long firstCustomerId = registerCustomerId();
+        Long firstOrderId = confirmOrder(firstCustomerId, issueToken(firstCustomerId, Role.CUSTOMER));
+        Long secondCustomerId = registerCustomerId();
+        Long secondOrderId = confirmOrder(secondCustomerId, issueToken(secondCustomerId, Role.CUSTOMER));
+
+        String firstNumber = pickupNumberOf(firstOrderId, adminToken);
+        String secondNumber = pickupNumberOf(secondOrderId, adminToken);
+        assertThat(firstNumber).isNotNull();
+        assertThat(secondNumber).isNotNull().isNotEqualTo(firstNumber);
+
+        // BR-026 — 취소로 비게 된 번호도 되돌려 쓰지 않는다. 매장에서 같은 번호를 두 번
+        // 부르는 상황을 막기 위해서다.
+        restTemplate.exchange(
+                "/api/admin/orders/" + firstOrderId + "/cancel", HttpMethod.POST,
+                new HttpEntity<>(new AdminCancelOrderRequest("재고 파손"), bearer(adminToken)), OrderCancelResponse.class);
+
+        Long thirdCustomerId = registerCustomerId();
+        Long thirdOrderId = confirmOrder(thirdCustomerId, issueToken(thirdCustomerId, Role.CUSTOMER));
+        String thirdNumber = pickupNumberOf(thirdOrderId, adminToken);
+
+        assertThat(thirdNumber).isNotIn(firstNumber, secondNumber);
+    }
+
+    private String pickupNumberOf(Long orderId, String adminToken) {
+        return restTemplate.exchange(
+                        "/api/admin/orders/" + orderId, HttpMethod.GET, new HttpEntity<>(bearer(adminToken)),
+                        AdminOrderDetailResponse.class)
+                .getBody()
+                .pickupNumber();
+    }
+
+    @Test
     @DisplayName("TC_090_091_준비완료와_완료처리가_순서대로_동작하고_중복_완료는_거부된다")
     void TC_090_091_준비완료와_완료처리가_순서대로_동작하고_중복_완료는_거부된다() {
         Long customerId = registerCustomerId();

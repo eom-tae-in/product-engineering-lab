@@ -39,8 +39,8 @@ class AuthApiIntegrationTest {
     }
 
     @Test
-    @DisplayName("고객_토큰으로_관리자_경로에_접근하면_403_FORBIDDEN이다")
-    void 고객_토큰으로_관리자_경로에_접근하면_403_FORBIDDEN이다() {
+    @DisplayName("TC_008_고객_토큰으로_관리자_경로에_접근하면_403_FORBIDDEN이다")
+    void TC_008_고객_토큰으로_관리자_경로에_접근하면_403_FORBIDDEN이다() {
         SignUpRequest signUpRequest = new SignUpRequest(
                 "apitest1@test.com", "password123", "사용자", "01011112222", null);
         ResponseEntity<SignUpResponse> signUpResponse =

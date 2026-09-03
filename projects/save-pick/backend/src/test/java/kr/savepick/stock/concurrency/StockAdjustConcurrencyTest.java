@@ -88,8 +88,8 @@ class StockAdjustConcurrencyTest {
     }
 
     @Test
-    @DisplayName("TC_085_관리자_축소와_고객_선점이_동시에_진행돼도_총재고는_선점확정_이상을_유지한다")
-    void TC_085_관리자_축소와_고객_선점이_동시에_진행돼도_총재고는_선점확정_이상을_유지한다() throws Exception {
+    @DisplayName("TC_085_108_관리자_축소와_고객_선점이_동시에_진행돼도_총재고는_선점확정_이상을_유지한다")
+    void TC_085_108_관리자_축소와_고객_선점이_동시에_진행돼도_총재고는_선점확정_이상을_유지한다() throws Exception {
         LocalDateTime now = serverClock.now();
         Product product = productRegisterService.register(
                 "동시_축소_상품", "설명", "1개", 10000, ProductTestFixtures.futureClosingAt(now, 5), (short) 5, 1L);

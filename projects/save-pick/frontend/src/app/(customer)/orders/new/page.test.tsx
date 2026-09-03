@@ -190,7 +190,9 @@ describe("SC-005 주문서 작성", () => {
     expect(replaceMock).toHaveBeenCalledWith("/cart");
   });
 
-  it("오류(통신): 주문서를 불러오지 못했어요와 다시 시도를 보여주고 재시도하면 복구된다", async () => {
+  // TC-110·TC-121(X5): lock_timeout 초과가 INTERNAL_ERROR(500)로 올라올 때 SC-005가
+  // 오류 상태로 노출하는지 확인한다.
+  it("TC-110 오류(통신): 주문서를 불러오지 못했어요와 다시 시도를 보여주고 재시도하면 복구된다", async () => {
     mockAuthenticatedSession();
     let attempt = 0;
     server.use(

@@ -231,7 +231,9 @@ describe("SC-011 주문 취소 확인", () => {
     expect(pushMock).toHaveBeenCalledWith("/orders/1001");
   });
 
-  it("오류(상태 불일치·취소됨): 이미 취소된 주문 문구를 보여준다", async () => {
+  // TC-098·TC-119(X3): 취소 요청이 재전송돼 이미 CANCELED가 된 경우, "픽업 완료"처럼
+  // 사실과 다른 문구가 아니라 실제 현재 상태에 맞는 문구를 보여줘야 한다.
+  it("TC-098 오류(상태 불일치·취소됨): 이미 취소된 주문 문구를 보여준다", async () => {
     await renderCancelable();
     mockCancelError("CANCEL_NOT_ALLOWED", 409, { currentStatus: "CANCELED" });
 

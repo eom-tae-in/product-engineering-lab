@@ -240,8 +240,8 @@ class OrderPaymentApiIntegrationTest {
     }
 
     @Test
-    @DisplayName("TC_058_타인_주문_상세에_접근하면_404다")
-    void TC_058_타인_주문_상세에_접근하면_404다() {
+    @DisplayName("TC_058_055_타인_주문_상세에_접근하면_404다")
+    void TC_058_055_타인_주문_상세에_접근하면_404다() {
         Long ownerId = registerCustomerId();
         String ownerToken = issueToken(ownerId, Role.CUSTOMER);
         PreparedOrder prepared = prepareOrder(ownerId, ownerToken, 5, 1);

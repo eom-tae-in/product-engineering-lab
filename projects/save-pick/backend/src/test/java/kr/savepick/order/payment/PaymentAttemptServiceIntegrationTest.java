@@ -244,8 +244,8 @@ class PaymentAttemptServiceIntegrationTest {
     }
 
     @Test
-    @DisplayName("TC_050_선점_만료_후_결제를_시도하면_HOLD_EXPIRED이고_주문이_EXPIRED로_종결된다")
-    void TC_050_선점_만료_후_결제를_시도하면_HOLD_EXPIRED이고_주문이_EXPIRED로_종결된다() {
+    @DisplayName("TC_050_033_선점_만료_후_결제를_시도하면_HOLD_EXPIRED이고_주문이_EXPIRED로_종결된다")
+    void TC_050_033_선점_만료_후_결제를_시도하면_HOLD_EXPIRED이고_주문이_EXPIRED로_종결된다() {
         Long adminId = registerCustomer("admin");
         Long customerId = registerCustomer("customer");
         Product product = registerOnSaleProduct("만료결제상품", 10, adminId);

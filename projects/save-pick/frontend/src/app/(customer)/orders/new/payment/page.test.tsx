@@ -262,7 +262,9 @@ describe("SC-007 결제 확인 및 결과", () => {
     expect(pushMock).toHaveBeenCalledWith("/orders/new?orderId=1001");
   });
 
-  it("오류(결제 직전 예약 마감): 다른 시간대 고르기로 보낸다", async () => {
+  // TC-125(X1 보강분): API-022 4단계 재검사에서 SLOT_CLOSED가 나면 SC-007이 전용 시트로
+  // SC-006 재선택을 유도해야 한다.
+  it("TC-125 오류(결제 직전 예약 마감): 다른 시간대 고르기로 보낸다", async () => {
     await renderReady();
     server.use(
       http.post(`${BASE}/api/orders/1001/payments`, () =>
