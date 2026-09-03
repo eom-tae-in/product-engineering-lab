@@ -56,6 +56,15 @@ savepick:
     login-block-duration: PT10M
     # 12번 §5 P8 — 로컬 개발 기본값. 운영 배포 시 환경변수로 반드시 교체하고 커밋하지 않는다.
     jwt-secret: ${JWT_SECRET:local-dev-only-secret-key-please-override-in-production-32bytes+}
+  # 12번 §5 P7 — 관리자 계정은 API로 만들지 않는다. 운영에서 첫 관리자를 만드는 유일한 경로다.
+  # 기본은 꺼짐(넷 다 비어 있음). 계정을 만든 뒤에는 네 값을 지우고 다시 배포한다.
+  # 한쪽만 채우거나 형식이 틀리면 AdminBootstrapRunner가 기동을 거부한다.
+  admin:
+    bootstrap:
+      email: ${ADMIN_BOOTSTRAP_EMAIL:}
+      password: ${ADMIN_BOOTSTRAP_PASSWORD:}
+      name: ${ADMIN_BOOTSTRAP_NAME:}
+      phone: ${ADMIN_BOOTSTRAP_PHONE:}
   # BATCH-06 만료 데이터 정리의 보관 기간 (10번 §8 데이터 보존과 정리).
   # 주문·재고 원장(orders·stock_ledgers·order_status_histories·inventory_holds)은 보존 대상이라 항목이 없다.
   retention:
