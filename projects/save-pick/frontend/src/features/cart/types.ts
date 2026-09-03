@@ -35,7 +35,8 @@ export interface CartItem {
 /** docs/11-api-spec.md API-012 · 장바구니 조회 (유효성 재검증 포함) 응답. */
 export interface CartResponse {
   serverTime: string;
-  guestToken: string;
+  /** 게스트 장바구니에만 값이 있다. 로그인 상태에서는 서버가 null을 준다(API-012 실제 응답). */
+  guestToken: string | null;
   items: CartItem[];
   totalAmount: number;
   orderable: boolean;

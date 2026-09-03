@@ -13,7 +13,7 @@ import {
 } from "@/features/cart/api";
 import { fetchNoShowStatus } from "@/features/account/api";
 import type { CartItem, CartResponse } from "@/features/cart/types";
-import { ApiError } from "@/lib/api-client";
+import { ApiError, getStoredGuestToken } from "@/lib/api-client";
 import { formatKstDateTime, formatWon } from "@/lib/format";
 import { Badge } from "@/components/ui/Badge";
 import { BottomSheet } from "@/components/ui/BottomSheet";
@@ -145,9 +145,29 @@ export default function CartPage() {
     return runLoad();
   }, [runLoad]);
 
+  // SC-004는 비로그인도 쓰는 화면이지만(게스트 장바구니), 조회에는 인증 토큰이나 게스트
+  // 토큰 중 하나가 반드시 실려야 한다(API-012). 둘 다 없이 보내면 서버가
+  // `VALIDATION_ERROR`(400)로 거절해 화면이 오류로 떨어진다. 두 경우를 막는다.
+  //
+  //  - `checking`: 액세스 토큰이 아직 메모리에 없다. 확인이 끝날 때까지 기다린다.
+  //  - 비로그인 + 게스트 토큰 없음: 아직 아무것도 담지 않아 장바구니 자체가 없다.
+  //    호출할 것이 없으므로 06 SC-004의 빈 상태로 바로 보낸다.
   useEffect(() => {
+    if (auth.status === "checking") return;
+    if (auth.status === "guest" && !getStoredGuestToken()) {
+      setCart({
+        serverTime: new Date().toISOString(),
+        guestToken: null,
+        items: [],
+        totalAmount: 0,
+        orderable: false,
+      });
+      setLoadError(null);
+      setLoading(false);
+      return;
+    }
     runLoad();
-  }, [runLoad]);
+  }, [auth.status, runLoad]);
 
   async function handleQuantityChange(item: CartItem, nextQuantity: number) {
     setPendingItemId(item.cartItemId);

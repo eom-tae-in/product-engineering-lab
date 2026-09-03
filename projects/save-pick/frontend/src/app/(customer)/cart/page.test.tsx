@@ -22,7 +22,13 @@ function renderPage() {
   );
 }
 
+/**
+ * 비로그인이지만 장바구니에 담은 것이 있는 상태. 담기 응답에서 받은 게스트 토큰이
+ * localStorage에 남아 있어야 조회가 가능하다(API-012는 인증 토큰이나 게스트 토큰 중
+ * 하나를 요구한다). 토큰을 심지 않으면 "아직 아무것도 담지 않은 방문자"가 된다.
+ */
 function mockGuestSession() {
+  window.localStorage.setItem("savepick.guestToken", "guest-token-for-test");
   server.use(
     http.post(`${BASE}/api/auth/token/refresh`, () =>
       HttpResponse.json(
@@ -583,5 +589,56 @@ describe("SC-004 장바구니", () => {
     await userEvent.click(screen.getByRole("button", { name: "주문서로 이동" }));
 
     expect(pushMock).toHaveBeenCalledWith("/orders/new?orderId=700");
+  });
+
+  it("아직 아무것도 담지 않은 비로그인 방문자는 요청 없이 빈 상태를 본다", async () => {
+    // 게스트 토큰이 없으면 장바구니 자체가 없다. 그대로 조회하면 서버가
+    // VALIDATION_ERROR(400)로 거절해 오류 화면이 뜬다(실제 브라우저에서 발견).
+    window.localStorage.removeItem("savepick.guestToken");
+    server.use(
+      http.post(`${BASE}/api/auth/token/refresh`, () =>
+        HttpResponse.json(
+          { code: "UNAUTHENTICATED", message: "인증이 필요해요.", serverTime: "2026-08-31T00:00:00+09:00" },
+          { status: 401 }
+        )
+      )
+    );
+    let cartCalled = false;
+    server.use(
+      http.get(`${BASE}/api/cart`, () => {
+        cartCalled = true;
+        return HttpResponse.json(
+          { code: "VALIDATION_ERROR", message: "게스트 토큰 또는 인증 토큰이 필요합니다.", serverTime: "2026-08-31T10:00:00+09:00" },
+          { status: 400 }
+        );
+      })
+    );
+    renderPage();
+
+    expect(await screen.findByText("장바구니가 비어 있어요")).toBeInTheDocument();
+    expect(cartCalled).toBe(false);
+  });
+
+  it("로그인 상태에서는 인증 확인이 끝난 뒤에 조회한다", async () => {
+    // 확인 전(checking)에 조회하면 액세스 토큰이 실리지 않아 400으로 떨어진다.
+    window.localStorage.removeItem("savepick.guestToken");
+    mockAuthenticatedSession();
+    let authHeader: string | null = "미호출";
+    server.use(
+      http.get(`${BASE}/api/cart`, ({ request }) => {
+        authHeader = request.headers.get("Authorization");
+        return HttpResponse.json({
+          serverTime: "2026-08-31T10:00:00+09:00",
+          guestToken: null,
+          items: [sampleItem()],
+          totalAmount: 16800,
+          orderable: true,
+        });
+      })
+    );
+    renderPage();
+
+    expect(await screen.findByText("국내산 삼겹살 300g")).toBeInTheDocument();
+    expect(authHeader).toBe("Bearer access-token");
   });
 });
