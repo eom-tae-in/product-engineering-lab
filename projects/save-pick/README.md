@@ -106,6 +106,12 @@ SPRING_PROFILES_ACTIVE=dev ./gradlew bootRun  # Flyway 마이그레이션 + 데�
 curl http://localhost:8080/actuator/health
 ```
 
+`application.yml`의 JWT 시크릿은 로컬 개발용 기본값을 갖고 있고 그 값이 저장소에 공개돼 있다. 그대로 운영에 뜨면 누구나 액세스 토큰을 위조할 수 있어, `dev`·`test`가 아닌 프로파일에서 기본값이면 `JwtSecretGuard`가 **기동을 거부**한다. 로컬에서 프로파일 없이 띄우려면 `JWT_SECRET`을 직접 주면 된다.
+
+```bash
+JWT_SECRET=$(openssl rand -base64 48) ./gradlew bootRun   # 프로파일 없이 띄울 때
+```
+
 `dev` 프로파일로 띄우면 `DevDataSeeder`가 최초 1회 데모 데이터를 넣는다. **관리자 계정을 만드는 유일한 경로다** — 12번(§5 P7)이 관리자 가입 API를 두지 않기로 해서, 이 시드 없이는 관리자 화면(SC-101~113)에 로그인할 수 없다.
 
 | 계정 | 이메일 | 비밀번호 |
