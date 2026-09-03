@@ -50,6 +50,9 @@ class ProductStatusServiceIntegrationTest {
     @Autowired
     private ServerClock serverClock;
 
+    @Autowired
+    private org.springframework.jdbc.core.JdbcTemplate jdbcTemplate;
+
     private Product registerSample() {
         LocalDateTime now = serverClock.now();
         return productRegisterService.register("상품", "설명", "1개", 10000, ProductTestFixtures.futureClosingAt(now, 5), (short) 5, 1L);
@@ -130,5 +133,56 @@ class ProductStatusServiceIntegrationTest {
                 .isInstanceOf(BusinessException.class)
                 .extracting(e -> ((BusinessException) e).errorCode())
                 .isEqualTo(ErrorCode.NOT_FOUND);
+    }
+
+    /** 이 상품을 담은 확정 주문 1건을 넣는다. 관심사는 "전환이 확정 주문을 어떻게 세는가"뿐이다. */
+    private void insertConfirmedOrder(Long productId, String status, int minuteOffset) {
+        LocalDateTime now = serverClock.now();
+        LocalDateTime pickupStartAt = now.plusHours(2).plusMinutes(minuteOffset);
+        Long slotId = jdbcTemplate.queryForObject(
+                "INSERT INTO pickup_slots (store_id, slot_date, start_at, end_at, capacity, reserved_count, blocked, created_at) "
+                        + "VALUES (1, ?, ?, ?, 20, 1, false, ?) RETURNING id",
+                Long.class, java.sql.Date.valueOf(pickupStartAt.toLocalDate()),
+                java.sql.Timestamp.valueOf(pickupStartAt), java.sql.Timestamp.valueOf(pickupStartAt.plusMinutes(30)),
+                java.sql.Timestamp.valueOf(now));
+
+        Member customer = Member.registerCustomer(
+                "customer-" + java.util.UUID.randomUUID() + "@test.com", "hash", "고객", "01011112222", now);
+        Long memberId = memberRepository.save(customer).getId();
+
+        String orderNo = "ORD-" + String.format("%015d", System.nanoTime() % 1_000_000_000_000_000L);
+        String canceledBy = "CANCELED".equals(status) ? "CUSTOMER" : null;
+        Long orderId = jdbcTemplate.queryForObject(
+                "INSERT INTO orders (order_no, member_id, status, total_amount, contact_name, contact_phone, "
+                        + "hold_expires_at, pickup_slot_id, pickup_business_date, canceled_by) "
+                        + "VALUES (?, ?, ?, 10000, '고객', '01011112222', ?, ?, ?, ?) RETURNING id",
+                Long.class, orderNo, memberId, status, java.sql.Timestamp.valueOf(now.plusMinutes(10)),
+                slotId, java.sql.Date.valueOf(pickupStartAt.toLocalDate()), canceledBy);
+
+        jdbcTemplate.update(
+                "INSERT INTO order_items (order_id, product_id, product_name, sale_unit, quantity, "
+                        + "original_unit_price, discount_rate, unit_price, line_amount, product_closing_at) "
+                        + "VALUES (?, ?, '상품', '1개', 1, 10000, 0, 10000, 10000, ?)",
+                orderId, productId, java.sql.Timestamp.valueOf(pickupStartAt));
+    }
+
+    @Test
+    @DisplayName("HIDDEN_전환은_유지되는_확정_주문_수를_실제로_세어_돌려준다")
+    void HIDDEN_전환은_유지되는_확정_주문_수를_실제로_세어_돌려준다() {
+        Product product = registerSample();
+        Long adminId = registerAdmin();
+        stockAdjustService.adjust(product.getId(), 10, null, adminId);
+        productStatusService.changeStatus(product.getId(), ProductStatus.ON_SALE, adminId);
+
+        insertConfirmedOrder(product.getId(), "CONFIRMED", 0);
+        insertConfirmedOrder(product.getId(), "READY", 30);
+        // 종결된 주문은 이 전환으로 영향받을 여지가 없어 세지 않는다(05 §5.2).
+        insertConfirmedOrder(product.getId(), "CANCELED", 60);
+        insertConfirmedOrder(product.getId(), "NO_SHOW", 90);
+
+        ProductStatusService.StatusChangeResult result =
+                productStatusService.changeStatus(product.getId(), ProductStatus.HIDDEN, adminId);
+
+        assertThat(result.keptConfirmedOrderCount()).isEqualTo(2);
     }
 }

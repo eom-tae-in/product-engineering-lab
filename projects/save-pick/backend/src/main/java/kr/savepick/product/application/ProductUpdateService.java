@@ -11,6 +11,7 @@ import kr.savepick.product.domain.Product;
 import kr.savepick.product.domain.ProductChangeLog;
 import kr.savepick.product.domain.ProductRepository;
 import kr.savepick.product.domain.ProductStatus;
+import kr.savepick.product.infrastructure.ConfirmedOrderReadDao;
 import kr.savepick.product.infrastructure.ProductChangeLogJpaRepository;
 import kr.savepick.store.application.StoreQueryService;
 import kr.savepick.store.domain.Store;
@@ -18,10 +19,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * API-105 상품 수정 (BR-003, BR-005, FR-041). 이미 확정된 주문의 스냅샷은 건드리지 않는다 —
- * order 도메인이 아직 없어(이번 슬라이스 범위 밖) 마감 단축의 영향 확정 주문 수는 항상 0으로
- * 고정한다. store 슬라이스의 StoreSettingService#updateSettings와 같은 임시 예외 패턴이며,
- * order 도메인이 생기면 실제 영향 건수를 계산하도록 교체해야 한다.
+ * API-105 상품 수정 (BR-003, BR-005, FR-041). 이미 확정된 주문의 스냅샷은 건드리지 않는다
+ * ({@code order_items}를 수정하지 않는다).
+ *
+ * <p>마감 시각을 앞당길 때는 그보다 픽업이 늦은 확정 주문 수를 {@link ConfirmedOrderReadDao}로
+ * 세어, {@code confirmEarlierClosing} 동의 없이는 실행하지 않는다(FR-041 예외).
  */
 @Service
 public class ProductUpdateService {
@@ -29,16 +31,19 @@ public class ProductUpdateService {
     private final ProductRepository productRepository;
     private final ProductChangeLogJpaRepository productChangeLogJpaRepository;
     private final StoreQueryService storeQueryService;
+    private final ConfirmedOrderReadDao confirmedOrderReadDao;
     private final ServerClock serverClock;
 
     public ProductUpdateService(
             ProductRepository productRepository,
             ProductChangeLogJpaRepository productChangeLogJpaRepository,
             StoreQueryService storeQueryService,
+            ConfirmedOrderReadDao confirmedOrderReadDao,
             ServerClock serverClock) {
         this.productRepository = productRepository;
         this.productChangeLogJpaRepository = productChangeLogJpaRepository;
         this.storeQueryService = storeQueryService;
+        this.confirmedOrderReadDao = confirmedOrderReadDao;
         this.serverClock = serverClock;
     }
 
@@ -50,6 +55,8 @@ public class ProductUpdateService {
         Product product = productRepository.findById(productId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND));
         LocalDateTime now = serverClock.now();
+        // 마감 시각을 바꾸지 않으면 영향받는 확정 주문도 없다(11번 API-105 응답 필드).
+        int affectedConfirmedOrderCount = 0;
 
         List<String> changedFields = new ArrayList<>();
 
@@ -82,9 +89,11 @@ public class ProductUpdateService {
                 throw new BusinessException(ErrorCode.CLOSING_TIME_INVALID);
             }
 
-            // order 도메인이 없어 실제 영향받는 확정 주문 수를 계산할 수 없다 — 항상 0으로 고정한다.
-            int affectedConfirmedOrderCount = 0;
+            // 11번 API-105 — 마감을 앞당겨 이미 확정된 주문의 픽업 시간대보다 빨라지는 경우를 센다.
             boolean shortened = closingAt.isBefore(product.getClosingAt());
+            affectedConfirmedOrderCount = shortened
+                    ? confirmedOrderReadDao.countConfirmedOrdersPickedUpAfter(productId, closingAt)
+                    : 0;
             if (shortened && affectedConfirmedOrderCount > 0 && !confirmEarlierClosing) {
                 throw new BusinessException(
                         ErrorCode.VALIDATION_ERROR,
@@ -103,7 +112,7 @@ public class ProductUpdateService {
         }
 
         productRepository.save(product);
-        return new UpdateResult(product, changedFields, 0);
+        return new UpdateResult(product, changedFields, affectedConfirmedOrderCount);
     }
 
     private void logChange(Long productId, String field, String before, String after, Long actorId, LocalDateTime now) {

@@ -7,6 +7,7 @@ import kr.savepick.common.time.ServerClock;
 import kr.savepick.product.domain.Product;
 import kr.savepick.product.domain.ProductChangeLog;
 import kr.savepick.product.domain.ProductRepository;
+import kr.savepick.product.infrastructure.ConfirmedOrderReadDao;
 import kr.savepick.product.domain.ProductStatus;
 import kr.savepick.product.infrastructure.ProductChangeLogJpaRepository;
 import kr.savepick.stock.application.StockQueryService;
@@ -27,16 +28,19 @@ public class ProductStatusService {
     private final ProductRepository productRepository;
     private final ProductChangeLogJpaRepository productChangeLogJpaRepository;
     private final StockQueryService stockQueryService;
+    private final ConfirmedOrderReadDao confirmedOrderReadDao;
     private final ServerClock serverClock;
 
     public ProductStatusService(
             ProductRepository productRepository,
             ProductChangeLogJpaRepository productChangeLogJpaRepository,
             StockQueryService stockQueryService,
+            ConfirmedOrderReadDao confirmedOrderReadDao,
             ServerClock serverClock) {
         this.productRepository = productRepository;
         this.productChangeLogJpaRepository = productChangeLogJpaRepository;
         this.stockQueryService = stockQueryService;
+        this.confirmedOrderReadDao = confirmedOrderReadDao;
         this.serverClock = serverClock;
     }
 
@@ -62,8 +66,9 @@ public class ProductStatusService {
         productRepository.save(product);
 
         int keptHoldCount = stockQueryService.countActiveHeld(productId);
-        // order 도메인이 없어 확정 주문 수를 셀 수 없다 — 항상 0으로 고정한다 (ProductUpdateService와 동일한 임시 예외).
-        int keptConfirmedOrderCount = 0;
+        // 05 §5.2 — 이 전환은 기존 HELD 선점과 확정 주문을 취소하지 않고 유지한다.
+        // 유지된 확정 주문 수를 실제로 세어 관리자에게 알린다(API-106).
+        int keptConfirmedOrderCount = confirmedOrderReadDao.countConfirmedOrders(productId);
 
         return new StatusChangeResult(product, now, keptHoldCount, keptConfirmedOrderCount);
     }
