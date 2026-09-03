@@ -2,6 +2,7 @@ package kr.savepick.stock.infrastructure;
 
 import jakarta.persistence.LockModeType;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 import kr.savepick.stock.domain.ProductStock;
 import kr.savepick.stock.domain.ProductStockRepository;
@@ -77,4 +78,8 @@ public interface ProductStockJpaRepository extends JpaRepository<ProductStock, L
         }
         return updated;
     }
+
+    /** BATCH-04 대상 조회 — 재고 행이 있는 모든 상품 (13-inventory-concurrency.md §9.1). */
+    @Query("select s.productId from ProductStock s order by s.productId asc")
+    List<Long> findAllProductIds();
 }

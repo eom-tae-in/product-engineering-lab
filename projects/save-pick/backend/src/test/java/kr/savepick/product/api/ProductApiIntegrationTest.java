@@ -3,6 +3,7 @@ package kr.savepick.product.api;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import kr.savepick.account.domain.Member;
 import kr.savepick.account.domain.MemberRepository;
 import kr.savepick.common.response.ErrorResponse;
@@ -10,7 +11,9 @@ import kr.savepick.common.time.ServerClock;
 import kr.savepick.product.application.ProductRegisterService;
 import kr.savepick.product.application.ProductStatusService;
 import kr.savepick.product.domain.Product;
+import kr.savepick.product.domain.ProductRepository;
 import kr.savepick.product.domain.ProductStatus;
+import kr.savepick.store.domain.Store;
 import kr.savepick.stock.application.StockAdjustService;
 import kr.savepick.support.ProductTestFixtures;
 import kr.savepick.support.TestcontainersConfig;
@@ -49,6 +52,9 @@ class ProductApiIntegrationTest {
     private MemberRepository memberRepository;
 
     @Autowired
+    private ProductRepository productRepository;
+
+    @Autowired
     private ServerClock serverClock;
 
     private Long registerAdmin() {
@@ -64,6 +70,35 @@ class ProductApiIntegrationTest {
         stockAdjustService.adjust(product.getId(), totalQuantity, null, adminId);
         productStatusService.changeStatus(product.getId(), ProductStatus.ON_SALE, adminId);
         return product;
+    }
+
+    /**
+     * 마감 시각이 이미 지난 ON_SALE 상품을 만든다. 등록 서비스는 미래 마감만 허용하므로
+     * (BR-003) 도메인 팩토리로 직접 저장한다 — BATCH-02가 아직 돌지 않아 status가 ON_SALE로
+     * 남아 있는 상황을 재현한다.
+     */
+    private Product saveOverdueOnSaleProduct(String name) {
+        LocalDateTime now = serverClock.now();
+        Product product = Product.register(
+                Store.SINGLETON_ID, name, "설명", "1개", 12000, now.minusMinutes(1), (short) 5, now.minusHours(2));
+        product.startSale(now.minusHours(2));
+        return productRepository.save(product);
+    }
+
+    @Test
+    @DisplayName("TC_070_마감_시각이_지난_상품은_배치를_기다리지_않고_목록에서_즉시_빠진다")
+    void TC_070_마감_시각이_지난_상품은_배치를_기다리지_않고_목록에서_즉시_빠진다() {
+        Long adminId = registerAdmin();
+        Product open = onSaleProduct("마감전 상품 " + java.util.UUID.randomUUID(), 10, adminId);
+        Product overdue = saveOverdueOnSaleProduct("마감된 상품 " + java.util.UUID.randomUUID());
+
+        ResponseEntity<ProductListResponse> response =
+                restTemplate.getForEntity("/api/products?size=100", ProductListResponse.class);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        List<Long> ids = response.getBody().items().stream().map(ProductListItemResponse::productId).toList();
+        // 11번 §11 BATCH-02 보완 — 조회 API가 배치를 기다리지 않고 즉시 제외한다(FR-014·FR-034).
+        assertThat(ids).contains(open.getId()).doesNotContain(overdue.getId());
     }
 
     @Test

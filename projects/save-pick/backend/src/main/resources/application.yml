@@ -32,7 +32,7 @@ savepick:
   time-zone: Asia/Seoul                       # BR-028
   hold:
     ttl: PT10M                                # BR-007 선점 10분, 연장 없음
-    expiring-soon-threshold: PT60S            # 03 U1 (임시 채택)
+    expiring-soon-threshold: PT60S            # 06 U1 확정 (2026-09-03) — 만료 1분 전 안내
   payment:
     max-attempts: 3                           # BR-012
   order:
@@ -56,6 +56,12 @@ savepick:
     login-block-duration: PT10M
     # 12번 §5 P8 — 로컬 개발 기본값. 운영 배포 시 환경변수로 반드시 교체하고 커밋하지 않는다.
     jwt-secret: ${JWT_SECRET:local-dev-only-secret-key-please-override-in-production-32bytes+}
+  # BATCH-06 만료 데이터 정리의 보관 기간 (10번 §8 데이터 보존과 정리).
+  # 주문·재고 원장(orders·stock_ledgers·order_status_histories·inventory_holds)은 보존 대상이라 항목이 없다.
+  retention:
+    expired-session: P7D                      # 10번 §8 auth_sessions expires_at < now - 7일
+    login-attempt: P90D                       # 10번 §8 login_attempts 90일 경과 행 삭제 (BR-002)
+    guest-cart: P7D                           # 10번 §8 게스트 장바구니 updated_at < now - 7일 (T-A3)
   stock:
     lock-timeout: PT3S                        # 13번 §3
   batch:
@@ -65,5 +71,9 @@ savepick:
       interval: PT30S                         # BATCH-02
     no-show:
       interval: PT3M                          # BATCH-03 (BR-021 5분 이내)
+    stock-consistency-check:
+      cron: "0 0 3 * * *"                     # BATCH-04 매일 03:00 (11번 §11, 13번 §9.1)
     pickup-slot-provision:
       cron: "0 5 0 * * *"                     # BATCH-05 매일 00:05 (+ 기동 시 1회)
+    data-retention:
+      cron: "0 0 4 * * *"                     # BATCH-06 매일 04:00 (11번 §11, 10번 §8)

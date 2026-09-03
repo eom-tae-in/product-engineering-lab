@@ -71,7 +71,12 @@ public class ProductQueryService {
                 ? productJpaRepository.findByStatus(ProductStatus.ON_SALE)
                 : productJpaRepository.findByStatusAndNameContainingIgnoreCase(ProductStatus.ON_SALE, trimmedKeyword);
 
-        List<Product> stillOnSale = closeDueProducts(candidates, now);
+        // 마감 시각이 지난 상품은 배치(BATCH-02)를 기다리지 않고 이 조회에서 즉시 뺀다
+        // (11번 §11 BATCH-02 보완, FR-014 "60초 안에 반영" · FR-034). closeDueProducts는
+        // 관리자 목록과 공유하는데 그쪽은 CLOSED도 보여줘야 하므로, 제외는 여기서만 한다.
+        List<Product> stillOnSale = closeDueProducts(candidates, now).stream()
+                .filter(product -> product.getStatus() != ProductStatus.CLOSED)
+                .toList();
 
         Map<Long, StockQuantities> quantities =
                 stockQueryService.getCorrectedQuantities(stillOnSale.stream().map(Product::getId).toList());
