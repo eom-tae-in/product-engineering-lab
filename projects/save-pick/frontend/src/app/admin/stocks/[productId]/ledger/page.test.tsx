@@ -79,6 +79,7 @@ const ALL_REASON_ITEMS = [
   {
     ledgerId: 2,
     reason: "HOLD",
+    orderId: 1017,
     orderNo: "ORD-20260828-000117",
     deltaHeld: 2,
     afterAvailable: 2,
@@ -88,6 +89,7 @@ const ALL_REASON_ITEMS = [
   {
     ledgerId: 3,
     reason: "CONFIRM",
+    orderId: 1017,
     orderNo: "ORD-20260828-000117",
     deltaHeld: -2,
     deltaConfirmed: 2,
@@ -98,6 +100,7 @@ const ALL_REASON_ITEMS = [
   {
     ledgerId: 4,
     reason: "HOLD_RELEASE",
+    orderId: 1002,
     orderNo: "ORD-20260828-000102",
     deltaHeld: -1,
     afterAvailable: 5,
@@ -108,6 +111,7 @@ const ALL_REASON_ITEMS = [
   {
     ledgerId: 5,
     reason: "HOLD_EXPIRE",
+    orderId: 1010,
     orderNo: "ORD-20260828-000110",
     deltaHeld: -1,
     afterAvailable: 6,
@@ -148,7 +152,8 @@ describe("SC-106 재고 변경 이력", () => {
     expect(await screen.findByText("삼겹살 500g")).toBeInTheDocument();
     const list = screen.getByRole("list");
     expect(within(list).getByText("관리자 조정")).toBeInTheDocument();
-    expect(within(list).getAllByText(/주문 번호 ORD-20260828-000117/).length).toBeGreaterThan(0);
+    // 주문 번호는 SC-110으로 가는 링크로 그려진다(아래 링크 테스트 참고).
+    expect(within(list).getAllByRole("link", { name: "ORD-20260828-000117" }).length).toBeGreaterThan(0);
     expect(within(list).getByText("총 재고 8 → 10")).toBeInTheDocument();
 
     for (const label of [
@@ -241,5 +246,26 @@ describe("SC-106 재고 변경 이력", () => {
 
     expect(await screen.findByText("불러오지 못했어요")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "다시 시도" })).toBeInTheDocument();
+  });
+
+  it("관련 주문 번호를 SC-110 주문 상세로 연결한다", async () => {
+    mockAuthenticatedSession();
+    mockProductDetail();
+    mockLedger(ALL_REASON_ITEMS);
+    await renderPage();
+
+    await screen.findByRole("list");
+    const link = screen.getAllByRole("link", { name: "ORD-20260828-000117" })[0];
+    expect(link).toHaveAttribute("href", "/admin/orders/1017");
+  });
+
+  it("주문과 무관한 사유(관리자 조정)는 링크를 만들지 않는다", async () => {
+    mockAuthenticatedSession();
+    mockProductDetail();
+    mockLedger([ALL_REASON_ITEMS[0]]);
+    await renderPage();
+
+    await screen.findByRole("list");
+    expect(screen.queryAllByRole("link")).toHaveLength(0);
   });
 });

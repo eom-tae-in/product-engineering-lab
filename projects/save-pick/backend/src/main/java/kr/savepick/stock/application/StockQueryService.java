@@ -144,7 +144,7 @@ public class StockQueryService {
 
         List<LedgerItem> items = pageResult.getContent().stream()
                 .map(ledger -> new LedgerItem(
-                        ledger.getId(), ledger.getReason(),
+                        ledger.getId(), ledger.getReason(), ledger.getOrderId(),
                         ledger.getOrderId() == null ? null : orderNos.get(ledger.getOrderId()),
                         ledger.getDeltaTotal(), ledger.getDeltaHeld(), ledger.getDeltaConfirmed(), ledger.getDeltaDiscarded(),
                         ledger.getAfterTotal(), ledger.getAfterAvailable(), ledger.getAfterHeld(), ledger.getAfterConfirmed(),
@@ -181,7 +181,7 @@ public class StockQueryService {
     }
 
     public record LedgerItem(
-            Long ledgerId, kr.savepick.stock.domain.StockChangeReason reason, String orderNo,
+            Long ledgerId, kr.savepick.stock.domain.StockChangeReason reason, Long orderId, String orderNo,
             int deltaTotal, int deltaHeld, int deltaConfirmed, int deltaDiscarded,
             int afterTotal, int afterAvailable, int afterHeld, int afterConfirmed,
             kr.savepick.common.audit.ActorType actorType, String note, LocalDateTime occurredAt) {

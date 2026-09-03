@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import Link from "next/link";
 import { fetchStockLedger } from "../api";
 import type { StockLedgerItem, StockLedgerReason } from "../types";
 import { fetchAdminProductDetail } from "@/features/admin-product/api";
@@ -90,8 +91,7 @@ function buildSnapshotLines(item: StockLedgerItem): string[] {
  * Client Component에서 마운트 시 `authScope: "admin"`으로 직접 호출한다.
  *
  * 사유 필터는 클라이언트에서만 걸러낸다 — API-111에 `reason` 쿼리 파라미터가 없다.
- * 관련 주문 번호는 SC-110(관리자 주문 상세)이 아직 구현되지 않아 링크 없이 텍스트로만
- * 보여준다(작업 지시 범위 밖).
+ * 관련 주문 번호는 SC-110(관리자 주문 상세)으로 연결한다 — 응답의 `orderId`를 라우트에 쓴다.
  */
 export function StockLedgerView({ productId }: StockLedgerViewProps) {
   const [productName, setProductName] = useState<string | null>(null);
@@ -195,7 +195,14 @@ export function StockLedgerView({ productId }: StockLedgerViewProps) {
               ))}
               <p className="font-caption mt-1 text-text-weak">
                 {`변경자 ${ACTOR_LABELS[item.actorType]}`}
-                {item.orderNo ? ` · 주문 번호 ${item.orderNo}` : ""}
+                {item.orderNo ? " · 주문 번호 " : ""}
+                {item.orderNo && item.orderId ? (
+                  <Link href={`/admin/orders/${item.orderId}`} className="text-brand underline">
+                    {item.orderNo}
+                  </Link>
+                ) : (
+                  item.orderNo
+                )}
               </p>
               {item.note ? <p className="font-caption text-text-weak">{item.note}</p> : null}
             </li>

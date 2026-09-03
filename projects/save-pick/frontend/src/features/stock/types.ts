@@ -92,6 +92,8 @@ export interface StockLedgerListParams {
 export interface StockLedgerItem {
   ledgerId: number;
   reason: StockLedgerReason;
+  /** SC-106이 관련 주문을 SC-110으로 열 때 쓴다. 주문과 무관한 사유(관리자 조정)면 null이다. */
+  orderId: number | null;
   orderNo: string | null;
   deltaTotal?: number;
   deltaHeld?: number;

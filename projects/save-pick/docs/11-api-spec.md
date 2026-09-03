@@ -1251,8 +1251,8 @@ HIDDEN 전환은 기존 HELD 선점과 확정 주문을 취소하지 않고 신�
 ```json
 {
   "items": [
-    { "ledgerId": 8821, "reason": "CANCEL_DISCARD", "orderNo": "ORD-20260828-000123", "deltaTotal": -1, "deltaConfirmed": -1, "afterTotal": 16, "afterAvailable": 9, "actorType": "CUSTOMER", "note": "상품 마감 시각 경과로 복구하지 않음", "occurredAt": "2026-08-28T21:10:00+09:00" },
-    { "ledgerId": 8790, "reason": "HOLD_EXPIRE", "orderNo": "ORD-20260828-000120", "deltaHeld": -2, "afterAvailable": 11, "actorType": "SYSTEM", "occurredAt": "2026-08-28T19:14:30+09:00" }
+    { "ledgerId": 8821, "reason": "CANCEL_DISCARD", "orderId": 1001, "orderNo": "ORD-20260828-000123", "deltaTotal": -1, "deltaConfirmed": -1, "afterTotal": 16, "afterAvailable": 9, "actorType": "CUSTOMER", "note": "상품 마감 시각 경과로 복구하지 않음", "occurredAt": "2026-08-28T21:10:00+09:00" },
+    { "ledgerId": 8790, "reason": "HOLD_EXPIRE", "orderId": 1000, "orderNo": "ORD-20260828-000120", "deltaHeld": -2, "afterAvailable": 11, "actorType": "SYSTEM", "occurredAt": "2026-08-28T19:14:30+09:00" }
   ],
   "page": { "number": 0, "size": 50, "totalElements": 24 }
 }
