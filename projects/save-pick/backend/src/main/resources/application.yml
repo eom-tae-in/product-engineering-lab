@@ -25,6 +25,27 @@ management:
     web:
       exposure:
         include: health,info
+  endpoint:
+    health:
+      # 컨테이너 오케스트레이터가 쓰는 /actuator/health/liveness · /readiness를 연다.
+      probes:
+        enabled: true
+      # 기본값이지만 명시한다 — DB 접속 정보·디스크 경로가 익명에게 보이면 안 된다.
+      show-details: never
+
+# 14-project-structure.md §9.5 로깅.
+logging:
+  pattern:
+    # 모든 로그 줄에 traceId를 남긴다(RequestTraceFilter가 MDC에 넣는다).
+    # 요청 밖에서 도는 기동·배치 로그는 빈칸으로 찍힌다.
+    level: "%5p [%X{traceId:-}]"
+  level:
+    root: INFO
+    kr.savepick: INFO
+    # 12번 §5 P4 — SQL 파라미터에는 비밀번호 해시·토큰 해시가 섞인다. 운영에서 켜지지
+    # 않도록 레벨을 명시해 둔다. 로컬에서 필요하면 실행할 때만 올린다.
+    org.hibernate.SQL: INFO
+    org.hibernate.orm.jdbc.bind: INFO
 
 # 14-project-structure.md §8 — G1 확정값은 상수로 박지 않고 설정으로 뺀다.
 # 값을 바꾸려면 옆에 표시된 BR-###/FR-### 문서를 먼저 확인한다.

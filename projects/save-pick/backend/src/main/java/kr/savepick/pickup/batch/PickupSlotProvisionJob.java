@@ -49,10 +49,12 @@ public class PickupSlotProvisionJob {
     }
 
     private void provision() {
+        long startedAt = System.nanoTime();
         var now = serverClock.now();
         java.time.LocalDate today = now.toLocalDate();
         int createdToday = pickupSlotProvisionService.provisionForDate(today, now);
         int createdTomorrow = pickupSlotProvisionService.provisionForDate(today.plusDays(1), now);
-        log.info("BATCH-05 픽업 시간대 생성 완료 — today={}건, tomorrow={}건", createdToday, createdTomorrow);
+        log.info("BATCH-05 픽업 시간대 생성 완료 — today={}건, tomorrow={}건 ({}ms)",
+                createdToday, createdTomorrow, (System.nanoTime() - startedAt) / 1_000_000);
     }
 }

@@ -40,6 +40,7 @@ public class NoShowDetectionJob {
     @Scheduled(fixedDelayString = "${savepick.batch.no-show.interval}")
     @SchedulerLock(name = "BATCH-03-no-show-detection", lockAtMostFor = "PT2M")
     public void run() {
+        long startedAt = System.nanoTime();
         LocalDateTime now = serverClock.now();
         List<Long> orderIds = orderRepository.findConfirmedOrReadyIdsForNoShow(now, BATCH_SIZE);
         int processed = 0;
@@ -49,7 +50,8 @@ public class NoShowDetectionJob {
             }
         }
         if (!orderIds.isEmpty()) {
-            log.info("BATCH-03 노쇼 자동 전환 완료 — 대상 {}건, 처리 {}건", orderIds.size(), processed);
+            log.info("BATCH-03 노쇼 자동 전환 완료 — 대상 {}건, 처리 {}건 ({}ms)",
+                    orderIds.size(), processed, (System.nanoTime() - startedAt) / 1_000_000);
         }
     }
 }

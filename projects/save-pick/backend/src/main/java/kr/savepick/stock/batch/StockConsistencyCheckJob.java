@@ -48,6 +48,7 @@ public class StockConsistencyCheckJob {
     @Scheduled(cron = "${savepick.batch.stock-consistency-check.cron}", zone = "${savepick.time-zone}")
     @SchedulerLock(name = "BATCH-04-stock-consistency-check", lockAtMostFor = "PT30M")
     public void run() {
+        long startedAt = System.nanoTime();
         LocalDateTime now = serverClock.now();
         List<Long> productIds = productStockJpaRepository.findAllProductIds();
 
@@ -60,7 +61,8 @@ public class StockConsistencyCheckJob {
             mismatched++;
             alert(result);
         }
-        log.info("BATCH-04 재고 정합성 점검 완료 — 점검 {}건, 불일치 {}건", productIds.size(), mismatched);
+        log.info("BATCH-04 재고 정합성 점검 완료 — 점검 {}건, 불일치 {}건 ({}ms)",
+                productIds.size(), mismatched, (System.nanoTime() - startedAt) / 1_000_000);
     }
 
     /** 로그만 보고 판단할 수 있도록 상품 ID와 실제값·기대값을 항목별로 남긴다. */

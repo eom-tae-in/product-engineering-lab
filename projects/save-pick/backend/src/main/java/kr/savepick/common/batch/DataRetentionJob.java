@@ -61,6 +61,7 @@ public class DataRetentionJob {
     @Scheduled(cron = "${savepick.batch.data-retention.cron}", zone = "${savepick.time-zone}")
     @SchedulerLock(name = "BATCH-06-data-retention", lockAtMostFor = "PT30M")
     public void run() {
+        long startedAt = System.nanoTime();
         LocalDateTime now = serverClock.now();
 
         int sessions = deleteInChunks("만료 세션", chunkSize -> authSessionCleanupService.deleteExpiredSessions(now, chunkSize));
@@ -69,8 +70,8 @@ public class DataRetentionJob {
 
         log.info(
                 "BATCH-06 만료 데이터 정리 완료 — 만료 세션 {}건, 로그인 시도 기록 {}건, 게스트 장바구니 {}건 삭제 "
-                        + "(주문·재고 원장은 삭제 대상이 아니다)",
-                sessions, loginAttempts, guestCarts);
+                        + "({}ms, 주문·재고 원장은 삭제 대상이 아니다)",
+                sessions, loginAttempts, guestCarts, (System.nanoTime() - startedAt) / 1_000_000);
     }
 
     /** 더 지울 것이 없을 때까지(덩어리가 가득 차지 않을 때까지) 정리 서비스를 반복 호출한다. */

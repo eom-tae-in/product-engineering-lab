@@ -44,6 +44,7 @@ public class ProductClosingJob {
     @Scheduled(fixedDelayString = "${savepick.batch.product-closing.interval}")
     @SchedulerLock(name = "BATCH-02-product-closing", lockAtMostFor = "PT1M")
     public void run() {
+        long startedAt = System.nanoTime();
         LocalDateTime now = serverClock.now();
         List<Long> productIds = productRepository.findIdsForClosing(now, BATCH_SIZE);
         int closed = 0;
@@ -53,7 +54,8 @@ public class ProductClosingJob {
             }
         }
         if (!productIds.isEmpty()) {
-            log.info("BATCH-02 상품 마감 상태 전환 완료 — 대상 {}건, 처리 {}건", productIds.size(), closed);
+            log.info("BATCH-02 상품 마감 상태 전환 완료 — 대상 {}건, 처리 {}건 ({}ms)",
+                    productIds.size(), closed, (System.nanoTime() - startedAt) / 1_000_000);
         }
     }
 }

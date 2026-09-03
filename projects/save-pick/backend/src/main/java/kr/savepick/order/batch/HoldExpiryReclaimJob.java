@@ -44,6 +44,7 @@ public class HoldExpiryReclaimJob {
     @Scheduled(fixedDelayString = "${savepick.batch.hold-expiry.interval}")
     @SchedulerLock(name = "BATCH-01-hold-expiry", lockAtMostFor = "PT1M")
     public void run() {
+        long startedAt = System.nanoTime();
         LocalDateTime now = serverClock.now();
         List<Long> orderIds = orderRepository.findPendingIdsForHoldExpiry(now, BATCH_SIZE);
         int processed = 0;
@@ -53,7 +54,8 @@ public class HoldExpiryReclaimJob {
             }
         }
         if (!orderIds.isEmpty()) {
-            log.info("BATCH-01 선점 만료 회수 완료 — 대상 {}건, 처리 {}건", orderIds.size(), processed);
+            log.info("BATCH-01 선점 만료 회수 완료 — 대상 {}건, 처리 {}건 ({}ms)",
+                    orderIds.size(), processed, (System.nanoTime() - startedAt) / 1_000_000);
         }
     }
 }
