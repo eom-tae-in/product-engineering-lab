@@ -10,6 +10,8 @@ import { ErrorState } from "@/components/ui/ErrorState";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { formatKstDateTime, formatKstTime, formatWon } from "@/lib/format";
 import { kstDateString } from "@/lib/server-time";
+import { fetchPickupSlots } from "@/features/pickup/api";
+import type { PickupSlot } from "@/features/pickup/types";
 
 type DateFilter = "ALL" | "TODAY" | "TOMORROW";
 
@@ -62,14 +64,15 @@ function pickupTimeText(item: AdminOrderListItem): string | null {
  * Client Component에서 마운트 시 `authScope: "admin"`으로 직접 호출한다
  * (ARCHITECTURE.md 데이터 페칭 규칙).
  *
- * 판단: docs/06은 "픽업 시간대" 필터도 요구하지만, API-112의 `slotId`는 시간대 ID값이고
- * 이 화면에 배정된 API(API-112)만으로는 유효한 시간대 목록을 얻을 방법이 없다(시간대
- * 목록은 API-118이 제공하는데 이 슬라이스 범위 밖인 SC-111용이고, 목록 응답 항목에도
- * slotId가 없다). 그래서 이 필터는 구현하지 않았다 — 최종 보고에 남긴다.
+ * 시간대 필터(06 SC-108 "주요 액션")는 날짜를 특정했을 때만 노출한다 — 시간대는 날짜에
+ * 딸린 값이라 "오늘·내일"을 함께 보는 동안에는 고를 수 없다. 목록은 API-118(SC-111과
+ * 공유)로 가져오고, 고른 시간대의 `slotId`를 API-112에 그대로 넘긴다.
  */
 export default function AdminOrderListPage() {
   const [dateFilter, setDateFilter] = useState<DateFilter>("ALL");
   const [statusFilter, setStatusFilter] = useState<AdminOrderStatusFilter | "ALL">("ALL");
+  const [slotFilter, setSlotFilter] = useState<number | "ALL">("ALL");
+  const [slots, setSlots] = useState<PickupSlot[]>([]);
   const [items, setItems] = useState<AdminOrderListItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -77,10 +80,12 @@ export default function AdminOrderListPage() {
   // effect 안에서 호출해도 setState가 동기 실행되지 않도록 async/await 대신
   // .then()/.catch() 콜백 안에서만 setState한다(react-hooks/set-state-in-effect,
   // lib/auth/customer-auth.tsx의 refresh().then(...) 패턴과 동일).
-  const runLoad = useCallback((date: DateFilter, status: AdminOrderStatusFilter | "ALL") => {
+  const runLoad = useCallback(
+    (date: DateFilter, status: AdminOrderStatusFilter | "ALL", slot: number | "ALL") => {
     return fetchAdminOrders({
       pickupDate: pickupDateOf(date),
       status: status === "ALL" ? undefined : status,
+      slotId: slot === "ALL" ? undefined : slot,
     })
       .then((response) => {
         setItems(response.items);
@@ -92,29 +97,60 @@ export default function AdminOrderListPage() {
       .finally(() => {
         setLoading(false);
       });
+    },
+    []
+  );
+
+  // 시간대 목록은 날짜를 특정했을 때만 의미가 있다(API-118은 날짜 단위 조회).
+  // 실패해도 화면을 막지 않는다 — 시간대 필터만 못 쓰고 날짜·상태 필터는 그대로 쓴다.
+  const runLoadSlots = useCallback((date: DateFilter) => {
+    const pickupDate = pickupDateOf(date);
+    if (!pickupDate) {
+      return Promise.resolve().then(() => setSlots([]));
+    }
+    return fetchPickupSlots(pickupDate)
+      .then((response) => setSlots(response.slots))
+      .catch(() => setSlots([]));
   }, []);
 
   // 재시도(버튼 클릭)에서만 쓴다. 로딩 화면으로 되돌린 뒤 다시 불러온다.
   const retryLoad = useCallback(() => {
     setLoading(true);
     setLoadError(null);
-    runLoad(dateFilter, statusFilter);
-  }, [runLoad, dateFilter, statusFilter]);
+    runLoad(dateFilter, statusFilter, slotFilter);
+  }, [runLoad, dateFilter, statusFilter, slotFilter]);
 
   // 필터 변경도 이 effect가 그대로 재조회하므로 필터 버튼 클릭은 상태만 바꾼다
   // (AdminProductListPage·AdminStockListPage와 동일 패턴, react-hooks/set-state-in-effect).
   useEffect(() => {
-    runLoad(dateFilter, statusFilter);
-  }, [dateFilter, statusFilter, runLoad]);
+    runLoad(dateFilter, statusFilter, slotFilter);
+  }, [dateFilter, statusFilter, slotFilter, runLoad]);
+
+  useEffect(() => {
+    void runLoadSlots(dateFilter);
+  }, [dateFilter, runLoadSlots]);
+
+  function changeDateFilter(next: DateFilter) {
+    setDateFilter(next);
+    // 시간대는 날짜에 딸린 값이라 날짜가 바뀌면 이전 선택을 유지할 수 없다.
+    setSlotFilter("ALL");
+  }
 
   function resetFilters() {
     setDateFilter("ALL");
     setStatusFilter("ALL");
+    setSlotFilter("ALL");
   }
 
   const appliedFilterLabels = [
     DATE_FILTERS.find((f) => f.value === dateFilter)?.label,
     statusFilter !== "ALL" ? STATUS_FILTERS.find((f) => f.value === statusFilter)?.label : null,
+    slotFilter !== "ALL"
+      ? (() => {
+          const selected = slots.find((slot) => slot.slotId === slotFilter);
+          return selected ? formatKstTime(selected.startAt) : null;
+        })()
+      : null,
   ].filter((label): label is string => Boolean(label));
 
   return (
@@ -126,7 +162,7 @@ export default function AdminOrderListPage() {
           <button
             key={filter.value}
             type="button"
-            onClick={() => setDateFilter(filter.value)}
+            onClick={() => changeDateFilter(filter.value)}
             aria-pressed={dateFilter === filter.value}
             className={`font-caption h-9 rounded-md border px-3 ${
               dateFilter === filter.value
@@ -156,6 +192,39 @@ export default function AdminOrderListPage() {
           </button>
         ))}
       </div>
+
+      {/* 시간대는 날짜에 딸린 값이라 날짜를 특정했을 때만 고를 수 있다(06 SC-108 주요 액션). */}
+      {slots.length > 0 ? (
+        <div className="flex gap-2 overflow-x-auto pb-1">
+          <button
+            type="button"
+            onClick={() => setSlotFilter("ALL")}
+            aria-pressed={slotFilter === "ALL"}
+            className={`font-caption h-9 flex-none rounded-md border px-3 ${
+              slotFilter === "ALL"
+                ? "border-brand bg-brand-weak text-brand"
+                : "border-border text-text-weak"
+            }`}
+          >
+            시간대 전체
+          </button>
+          {slots.map((slot) => (
+            <button
+              key={slot.slotId}
+              type="button"
+              onClick={() => setSlotFilter(slot.slotId)}
+              aria-pressed={slotFilter === slot.slotId}
+              className={`font-caption h-9 flex-none rounded-md border px-3 tabular-nums ${
+                slotFilter === slot.slotId
+                  ? "border-brand bg-brand-weak text-brand"
+                  : "border-border text-text-weak"
+              }`}
+            >
+              {formatKstTime(slot.startAt)}
+            </button>
+          ))}
+        </div>
+      ) : null}
 
       {loading ? (
         <div className="flex flex-col gap-3">

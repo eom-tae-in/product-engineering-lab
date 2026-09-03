@@ -44,6 +44,29 @@ function sampleItem(overrides: Record<string, unknown> = {}) {
   };
 }
 
+/** API-118 시간대 목록. SC-108의 시간대 필터가 이 응답으로 칩을 만든다. */
+function mockPickupSlots(date: string, slots: Array<{ slotId: number; startAt: string }>) {
+  server.use(
+    http.get(`${BASE}/api/admin/pickup-slots`, () =>
+      HttpResponse.json({
+        date,
+        isHoliday: false,
+        slots: slots.map((slot) => ({
+          slotId: slot.slotId,
+          startAt: slot.startAt,
+          endAt: slot.startAt,
+          capacity: 20,
+          reservedCount: 1,
+          full: false,
+          blocked: false,
+          reservationClosed: false,
+          itemTotals: [],
+        })),
+      })
+    )
+  );
+}
+
 function mockOrders(items: unknown[]) {
   server.use(
     http.get(`${BASE}/api/admin/orders`, () =>
@@ -201,5 +224,86 @@ describe("SC-108 주문 목록 (관리자)", () => {
     const card = (await screen.findByText("한지우")).closest("a") as HTMLElement;
     expect(within(card).getByText("픽업 번호 없음")).toBeInTheDocument();
     expect(within(card).getByText("결제 실패")).toBeInTheDocument();
+  });
+
+  it("시간대 필터: 날짜를 고르면 시간대 칩이 나오고 고른 slotId로 다시 조회한다", async () => {
+    mockAuthenticatedSession();
+    mockOrders([sampleItem()]);
+    const today = kstDateString(0);
+    mockPickupSlots(today, [
+      { slotId: 341, startAt: `${today}T20:00:00+09:00` },
+      { slotId: 342, startAt: `${today}T20:30:00+09:00` },
+    ]);
+    renderPage();
+    await screen.findByText("042");
+
+    // 날짜가 "오늘·내일"인 동안에는 시간대를 고를 수 없다 — 시간대는 날짜에 딸린 값이다.
+    expect(screen.queryByRole("button", { name: "시간대 전체" })).not.toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole("button", { name: "오늘" }));
+    expect(await screen.findByRole("button", { name: "20:00" })).toBeInTheDocument();
+
+    let requestedSlotId: string | null = null;
+    server.use(
+      http.get(`${BASE}/api/admin/orders`, ({ request }) => {
+        requestedSlotId = new URL(request.url).searchParams.get("slotId");
+        return HttpResponse.json({
+          items: [sampleItem()],
+          page: { number: 0, size: 20, totalElements: 1 },
+        });
+      })
+    );
+
+    await userEvent.click(screen.getByRole("button", { name: "20:00" }));
+
+    await waitFor(() => expect(requestedSlotId).toBe("341"));
+  });
+
+  it("날짜를 바꾸면 이전 시간대 선택을 유지하지 않는다", async () => {
+    mockAuthenticatedSession();
+    mockOrders([sampleItem()]);
+    const today = kstDateString(0);
+    mockPickupSlots(today, [{ slotId: 341, startAt: `${today}T20:00:00+09:00` }]);
+    renderPage();
+    await screen.findByText("042");
+
+    await userEvent.click(screen.getByRole("button", { name: "오늘" }));
+    await userEvent.click(await screen.findByRole("button", { name: "20:00" }));
+
+    let requestedSlotId: string | null = "not-called";
+    server.use(
+      http.get(`${BASE}/api/admin/orders`, ({ request }) => {
+        requestedSlotId = new URL(request.url).searchParams.get("slotId");
+        return HttpResponse.json({
+          items: [sampleItem()],
+          page: { number: 0, size: 20, totalElements: 1 },
+        });
+      })
+    );
+
+    await userEvent.click(screen.getByRole("button", { name: "오늘·내일" }));
+
+    // 다른 날짜의 slotId를 그대로 들고 가면 빈 목록이 나온다.
+    await waitFor(() => expect(requestedSlotId).toBeNull());
+  });
+
+  it("시간대 목록 조회가 실패해도 날짜·상태 필터는 그대로 쓸 수 있다", async () => {
+    mockAuthenticatedSession();
+    mockOrders([sampleItem()]);
+    server.use(
+      http.get(`${BASE}/api/admin/pickup-slots`, () =>
+        HttpResponse.json(
+          { code: "INTERNAL_ERROR", message: "서버 오류", serverTime: "2026-08-28T18:00:00+09:00" },
+          { status: 500 }
+        )
+      )
+    );
+    renderPage();
+    await screen.findByText("042");
+
+    await userEvent.click(screen.getByRole("button", { name: "오늘" }));
+
+    expect(await screen.findByText("042")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "시간대 전체" })).not.toBeInTheDocument();
   });
 });
